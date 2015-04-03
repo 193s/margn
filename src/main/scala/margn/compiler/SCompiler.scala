@@ -18,7 +18,7 @@ object SCompiler {
         il.append(new PUSH(env.cg, value))
 
       case ASTVariableReference(id) =>
-        il.append(new ISTORE(env.getIndex(id)))
+        il.append(new ILOAD(env.getIndex(id)))
       // - expr
       case ASTIUnaryMinus(expr) =>
         // 0 - expr
