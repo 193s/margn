@@ -1,3 +1,5 @@
-nguage: scala
+language: scala
 scala:
    - 2.11.5
+script:
+   - sbt assembly
