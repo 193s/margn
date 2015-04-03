@@ -13,6 +13,10 @@ margn -> Java Bytecode
   
 *See [build.sbt](https://github.com/193s/margn/blob/master/build.sbt)*
 
+
+## TODO
+See Issues: https://github.com/193s/margn/issues
+
 ## Specification?
 
 #### Program
@@ -45,6 +49,8 @@ integerLiteral ::= [1-9][0-9]*
                  | 0b[01]+
 ```
 
-## TODO
-See Issues: https://github.com/193s/margn/issues
 
+## License
+Copyright (c) 2015 193s
+
+Published under The GNU GPLv2, see LICENSE
