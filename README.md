@@ -1,8 +1,8 @@
 # margn
-A JVM-based scripting language.
-
+A JVM-based scripting language.  
 `margn compiler` compiles margn code into Java Bytecode.
 
+[![Build Status](https://travis-ci.org/193s/margn.svg)](https://travis-ci.org/193s/margn)
 
 ## Usage
 `$ git clone https://github.com/193s/margn.git && cd margn`,  
