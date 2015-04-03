@@ -4,7 +4,7 @@ import margn.compiler.SCompiler
 
 import scala.io.Source
 
-object CompilerFrontend {
+object Margn {
   val extension = ".mg"
   def main(args: Array[String]) = {
     if (args.length == 0) {
