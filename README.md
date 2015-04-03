@@ -1,7 +1,8 @@
 # margn
-__Programming language (Compiler)__
+A JVM-based scripting language.
 
-margn -> Java Bytecode
+`margn compiler` compiles margn code into Java Bytecode.
+
 
 ## Usage
 `$ git clone https://github.com/193s/margn.git && cd margn`,  
