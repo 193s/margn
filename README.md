@@ -4,8 +4,14 @@ __Programming language (Compiler)__
 margn -> Java Bytecode
 
 ## Usage
-`sbt run`?!?!
+`$ git clone https://github.com/193s/margn.git && cd margn`,  
+`$ sbt assembly` to generate `./target/scala-xxx/margn` (executable)
 
+### Dependencies
+- Apache bcel
+- Scala parser combinator
+  
+*See [build.sbt](https://github.com/193s/margn/blob/master/build.sbt)*
 
 ## Specification?
 
