@@ -8,8 +8,10 @@ import org.apache.bcel.Constants._
 import scala.collection.mutable
 
 object SCompiler {
+  /** compile source code into class file */
   def compile(classFile: String, code: String): Unit = compile(classFile, ProgramParser(code))
 
+  /** compile expressions */
   def compileExpr(ast: ASTExpr, env: Env): InstructionList = {
     val il = new InstructionList()
     ast match {
@@ -17,8 +19,10 @@ object SCompiler {
       case ASTIntegerLiteral(value) =>
         il.append(new PUSH(env.cg, value))
 
+      // variable
       case ASTVariableReference(id) =>
         il.append(new ILOAD(env.getIndex(id)))
+
       // - expr
       case ASTIUnaryMinus(expr) =>
         // 0 - expr
@@ -53,6 +57,7 @@ object SCompiler {
     il
   }
 
+  /** compile statements */
   def compileStatement(ast: ASTStatement, env: Env): InstructionList = {
     val il = new InstructionList()
     ast match {
@@ -67,10 +72,20 @@ object SCompiler {
         val index = env.createIndex(id)
         il.append(compileExpr(expr, env))
         il.append(new ISTORE(index))
+
+      case ASTIf(cond, then) =>
+        il.append(compileExpr(cond, env))
+        val target = new IFEQ(null)
+        il.append(target.negate())
+        il.append(compileStatement(then, env))
+        il.append(new NOP())
+        // set target
+        target.setTarget(il.getEnd)
     }
     il
   }
 
+  /** compile programs */
   def compileProgram(ast: ASTProgram, env: Env): InstructionList = {
     val il = new InstructionList()
     for (s: ASTStatement <- ast.children) {
@@ -79,6 +94,7 @@ object SCompiler {
     il
   }
 
+  /** compile AST and dump to classFile */
   def compile(classFile: String, program: ASTProgram): Unit = {
     val gen = new ClassGen(classFile, "java.lang.Object", "<margn>", ACC_PUBLIC, null)
     val cg = gen.getConstantPool
@@ -99,6 +115,7 @@ object SCompiler {
     mg.setMaxLocals()
 
     gen.addMethod(mg.getMethod)
+    // dump
     gen.getJavaClass.dump(classFile + ".class")
   }
 }

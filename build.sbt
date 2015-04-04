@@ -4,9 +4,14 @@ version := "1.0"
 
 scalaVersion := "2.11.5"
 
+// scala parser combinator
 libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3"
 
+// apache bcel
 libraryDependencies += "org.apache.bcel" % "bcel" % "5.2"
+
+// scopt
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
 
 
 // sbt-assembly

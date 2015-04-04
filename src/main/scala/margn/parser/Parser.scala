@@ -23,22 +23,37 @@ object ProgramParser extends RegexParsers {
 object StatementParser extends RegexParsers {
   type T = Parser[ASTStatement]
   def apply(str: String): ASTStatement = {
-    val opt = parseAll(statement, str)
-    if (opt.isEmpty) throw new ParseError("failed to parse statement")
-    opt.get
+    parseAll(statement, str) match {
+      case Success(res, next) => res
+      case NoSuccess(err, next) =>
+        // throw new ParseError(s"$err on line ${next.pos.line} on column ${next.pos.column}")
+       throw new ParseError(err)
+    }
   }
 
   def print: T = "print" ~> ".*".r ^^ { s => ASTPrint(ExprParser(s)) }
   def let:   T = "let" ~> "[a-zA-Z_]+".r ~ "=" ~ ".*".r ^^ { t => ASTLet(t._1._1, ExprParser(t._2)) }
-  def statement: T = print | let
+  def if_ :  T = "if" ~> "[^:]+".r ~ ":" ~ "[^;]+".r  ~ ( "else" ~> ".+".r ).? ^^ { t =>
+    println(t)
+    val astCond = ExprParser(t._1._1._1)
+    val astThen = StatementParser(t._1._2)
+    val elseOpt = t._2
+    println(astCond);println(astThen) // FIXME
+    if (elseOpt.isEmpty) ASTIf(astCond, astThen)
+    else                 ASTIfElse(astCond, astThen, StatementParser(elseOpt.get))
+  }
+  def statement: T = print | let // | if_
 }
 
 object ExprParser extends RegexParsers {
   type T = Parser[ASTExpr]
   def apply(str: String): ASTExpr = {
-    val opt = parseAll(expr, str)
-    if (opt.isEmpty) throw new ParseError("failed to parse expr")
-    opt.get
+    parseAll(expr, str) match {
+      case Success(res, next) => res
+      case NoSuccess(err, next) =>
+        // throw new ParseError(s"$err on line ${next.pos.line} on column ${next.pos.column}")
+        throw new ParseError(err)
+    }
   }
 
   def integerLiteral: T = (
