@@ -1,5 +1,6 @@
 package margn.main
 
+import java.lang.System.err
 import java.io.File
 import margn.compiler.{CompileError, SCompiler}
 import margn.parser.ParseError
@@ -35,17 +36,22 @@ object Margn {
         catch {
           // Parse Error
           case e: ParseError =>
-            System.err.println("parser error:")
-            System.err.println(e.getMessage)
+            err.println("parser error:")
+            err.println(e.getMessage)
+            sys.exit(-1)
 
+          // Compile Error
           case e: CompileError =>
-            System.err.println("compile error:")
-            System.err.println(e.getMessage)
+            err.println("compile error:")
+            err.println(e.getMessage)
+            sys.exit(-1)
         }
         println("Successfully compiled")
 
+      // arguments are bad
       case None =>
-      // arguments are bad, error message will have been displayed
+        // error message will have been displayed
+        sys.exit(-1)
     }
   }
 

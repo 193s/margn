@@ -33,11 +33,11 @@ object StatementParser extends RegexParsers {
 
   def print: T = "print" ~> ".*".r ^^ { s => ASTPrint(ExprParser(s)) }
   def let:   T = "let" ~> "[a-zA-Z_]+".r ~ "=" ~ ".*".r ^^ { t => ASTLet(t._1._1, ExprParser(t._2)) }
-  def if_ :  T = "if" ~> "[^:]+".r ~ ":" ~ "[^;]+".r  ~ ( "else" ~> ".+".r ).? ^^ { t =>
+  def if_ :  T = "if" ~> "[^:]+".r ~ ":" ~ "[^;]+".r  ~ ( "else" ~> ":" ~> "[^;]+".r ).? ^^ { t =>
     val astCond = ExprParser(t._1._1._1)
     val astThen = StatementParser(t._1._2)
     val elseOpt = t._2
-    if (elseOpt.isEmpty) ASTIf(astCond, astThen)
+    if (elseOpt.isEmpty) ASTIf    (astCond, astThen)
     else                 ASTIfElse(astCond, astThen, StatementParser(elseOpt.get))
   }
   def statement: T = print | let | if_

@@ -1,3 +1,4 @@
-
-if 1 == 2: print 100;
-if 1 == 1: print 10;
+print 100;
+print 20;
+if 321 == 321: print 10;
+print 0;

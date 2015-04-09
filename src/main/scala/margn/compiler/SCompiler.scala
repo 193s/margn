@@ -68,6 +68,8 @@ object SCompiler {
         t1.setTarget(ih)
         t2.setTarget(ih2)
         // T2: FIN
+
+      case e => throw new CompileError(s"[FATAL ERROR] Unexpected syntax tree (expr): $e")
     }
     il
   }
@@ -76,6 +78,7 @@ object SCompiler {
   def compileStatement(ast: ASTStatement, env: Env): InstructionList = {
     val il = new InstructionList()
     ast match {
+      // print
       case ASTPrint(expr) =>
         val out = env.cg.addFieldref("java.lang.System", "out", "Ljava/io/PrintStream;")
         val println = env.cg.addMethodref("java.io.PrintStream", "println", "(I)V")
@@ -83,11 +86,13 @@ object SCompiler {
         il.append(compileExpr(expr, env))
         il.append(new INVOKEVIRTUAL(println))
 
+      // let
       case ASTLet(id, expr) =>
         val index = env.createIndex(id)
         il.append(compileExpr(expr, env))
         il.append(new ISTORE(index))
 
+      // if
       case ASTIf(cond, then) =>
         il.append(compileExpr(cond, env))
         val target = il.append(new IFEQ(null))
@@ -96,7 +101,19 @@ object SCompiler {
         // set target
         target.setTarget(ih)
 
-      // TODO: ASTIfElse
+      // if - else
+      case ASTIfElse(cond, then, else_) =>
+        il.append(compileExpr(cond, env))
+        val target = il.append(new IFEQ(null))
+        il.append(compileStatement(then, env))
+        val t2 = il.append(new GOTO(null))
+        il.append(compileStatement(else_, env))
+        val ih = il.append(new NOP())
+        // set target
+        target.setTarget(t2)
+        t2.setTarget(ih)
+
+      case e => throw new CompileError(s"[FATAL ERROR] Unexpected syntax tree (statement): $e")
     }
     il
   }
