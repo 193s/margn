@@ -12,6 +12,8 @@ abstract class ASTLiteral extends ASTExpr
 case class ASTIntegerLiteral(value: Int) extends ASTLiteral
 
 abstract class ASTOperator extends ASTExpr
+case class ASTEquals(left: ASTExpr, right: ASTExpr) extends ASTOperator
+
 case class ASTIUnaryMinus(expr: ASTExpr) extends ASTOperator
 case class ASTIAdd(left: ASTExpr, right: ASTExpr) extends ASTOperator
 case class ASTISub(left: ASTExpr, right: ASTExpr) extends ASTOperator

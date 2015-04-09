@@ -34,15 +34,13 @@ object StatementParser extends RegexParsers {
   def print: T = "print" ~> ".*".r ^^ { s => ASTPrint(ExprParser(s)) }
   def let:   T = "let" ~> "[a-zA-Z_]+".r ~ "=" ~ ".*".r ^^ { t => ASTLet(t._1._1, ExprParser(t._2)) }
   def if_ :  T = "if" ~> "[^:]+".r ~ ":" ~ "[^;]+".r  ~ ( "else" ~> ".+".r ).? ^^ { t =>
-    println(t)
     val astCond = ExprParser(t._1._1._1)
     val astThen = StatementParser(t._1._2)
     val elseOpt = t._2
-    println(astCond);println(astThen) // FIXME
     if (elseOpt.isEmpty) ASTIf(astCond, astThen)
     else                 ASTIfElse(astCond, astThen, StatementParser(elseOpt.get))
   }
-  def statement: T = print | let // | if_
+  def statement: T = print | let | if_
 }
 
 object ExprParser extends RegexParsers {
@@ -100,6 +98,9 @@ object ExprParser extends RegexParsers {
     }
     | simpleExpr ~ "/" ~ expr ^^ {
       t => ASTIDiv(t._1._1, t._2)
+    }
+    | simpleExpr ~ "==" ~ expr ^^ {
+      t => ASTEquals(t._1._1, t._2)
     }
     | simpleExpr
   )

@@ -1,7 +1,3 @@
 
-print 1;
-print 100;
-
-let a = 0xcafe;
-print a;
-print a;
+if 1 == 2: print 100;
+if 1 == 1: print 10;

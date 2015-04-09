@@ -53,6 +53,21 @@ object SCompiler {
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         il.append(new IDIV())
+
+      // expr == expr
+      case ASTEquals(left, right) =>
+        il.append(compileExpr(left, env))
+        il.append(compileExpr(right, env))
+        // push 0/1
+        val t1 = il.append(new IF_ICMPEQ(null))
+        il.append(new ICONST(0))          // push 0
+        val t2 = il.append(new GOTO(null))
+        // T1:
+        val ih = il.append(new ICONST(1)) // push 1
+        val ih2 = il.append(new NOP())
+        t1.setTarget(ih)
+        t2.setTarget(ih2)
+        // T2: FIN
     }
     il
   }
@@ -75,12 +90,13 @@ object SCompiler {
 
       case ASTIf(cond, then) =>
         il.append(compileExpr(cond, env))
-        val target = new IFEQ(null)
-        il.append(target.negate())
+        val target = il.append(new IFEQ(null))
         il.append(compileStatement(then, env))
-        il.append(new NOP())
+        val ih = il.append(new NOP())
         // set target
-        target.setTarget(il.getEnd)
+        target.setTarget(ih)
+
+      // TODO: ASTIfElse
     }
     il
   }
