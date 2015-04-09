@@ -3,15 +3,25 @@
 [![Build Status](https://travis-ci.org/193s/margn.svg)](https://travis-ci.org/193s/margn)
 
 
-A JVM-based scripting language.  
-`margn compiler` compiles margn code into Java Bytecode.
-
+margn is a JVM-based scripting language that compiles into Java class file.  
 
 ## Usage
-`$ git clone https://github.com/193s/margn.git && cd margn`,  
-`$ sbt assembly` to generate `./target/scala-xxx/margn` (executable)
+compile a script:
+```sh
+$ margn script.mg
+```
+execute a compiled class file:
+```sh
+$ java script
+```
 
-### Dependencies
+`margn --help` for more information.
+
+## Install
+`$ git clone https://github.com/193s/margn.git && cd margn`,  
+`$ sbt assembly` to generate `./target/scala-xxx/margn` (executable file)
+
+#### Dependencies
 - Apache bcel
 - Scala parser combinator
   
