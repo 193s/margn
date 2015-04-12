@@ -67,4 +67,4 @@ integerLiteral ::= [1-9][0-9]*
 ## License
 Copyright (c) 2015 193s
 
-Published under The GNU GPLv2, see LICENSE
+Published under the GNU GPLv2, see LICENSE
