@@ -18,8 +18,8 @@ $ java script
 `margn --help` for more information.
 
 ## Install
-`$ git clone https://github.com/193s/margn.git && cd margn`,  
-`$ sbt assembly` to generate `./target/scala-xxx/margn` (executable file)
+`$ git clone https://github.com/193s/margn.git && cd margn`, then  
+`$ sbt assembly` to generate `./margn` (executable file)
 
 #### Requirements
 - Scala

@@ -18,6 +18,8 @@ libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
 
 mainClass in assembly := Some("margn.main.Margn")
 
+assemblyOutputPath in assembly := file(s"./${name.value}/")
+
 assemblyOption in assembly := (assemblyOption in assembly).value.copy(prependShellScript = Some(Seq("#!/usr/bin/env sh", """exec java -jar "$0" "$@"""" )))
 
 assemblyJarName in assembly := s"${name.value}"
