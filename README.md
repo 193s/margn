@@ -5,6 +5,14 @@
 
 margn is a JVM-based scripting language that compiles into Java class file.  
 
+```c
+let a = 100;
+let b = 0xcafe;
+print a;
+if a == b: print 0;
+assert a == 100;
+```
+
 ## Usage
 compile a script:
 ```sh
