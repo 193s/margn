@@ -21,17 +21,15 @@ $ java script
 `$ git clone https://github.com/193s/margn.git && cd margn`,  
 `$ sbt assembly` to generate `./target/scala-xxx/margn` (executable file)
 
-#### Dependencies
-- Apache bcel
-- Scala parser combinator
-  
-*See [build.sbt](https://github.com/193s/margn/blob/master/build.sbt)*
+#### Requirements
+- Scala
+- sbt
 
 
 ## TODO
 See Issues: https://github.com/193s/margn/issues
 
-## Specification?
+## Specification
 
 #### Program
 ```ebnf
@@ -40,7 +38,8 @@ program ::= { statement ";" }
 
 #### Statements
 ```ebnf
-statement ::= let | print | assert
+statement ::= let | print | if | assert
+if     ::= "if" expr ":" statement
 let    ::= "let" id "=" expr
 print  ::= "print" expr
 assert ::= "assert" expr
@@ -51,7 +50,8 @@ assert ::= "assert" expr
 expr ::= expr "+" expr
        | expr "-" expr
        | expr "*" expr
-       | Expr "/" expr
+       | expr "/" expr
+       | expr "==" expr
        | simpleExpr
 
 simpleExpr ::= "-" simpleExpr
@@ -68,4 +68,4 @@ integerLiteral ::= [1-9][0-9]*
 ## License
 Copyright (c) 2015 193s
 
-Published under The GNU GPLv2, see LICENSE
+Published under the GNU GPLv2, see LICENSE
