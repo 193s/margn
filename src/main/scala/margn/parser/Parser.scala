@@ -17,7 +17,7 @@ object ProgramParser extends RegexParsers {
     */
   }
 
-  def program: T = repsep(".*".r ^^ { StatementParser(_) }, ";") ^^ { t => ASTProgram(t) }
+  def program: T = repsep(".*".r ^^ { StatementParser(_) }, ";") ^^ { ASTProgram }
 }
 
 object StatementParser extends RegexParsers {
@@ -33,7 +33,9 @@ object StatementParser extends RegexParsers {
 
   def print:  T = "print"  ~> ".*".r ^^ { s => ASTPrint(ExprParser(s)) }
   def assert: T = "assert" ~> ".*".r ^^ { s => ASTAssert(ExprParser(s)) }
-  def let:    T = "let" ~> "[a-zA-Z_]+".r ~ "=" ~ ".*".r ^^ { t => ASTLet(t._1._1, ExprParser(t._2)) }
+  def let:    T = "let" ~> "[a-zA-Z_]+".r ~ "=" ~ ".*".r ^^ {
+    case left ~ _ ~ expr => ASTLet(left, ExprParser(expr))
+  }
   def if_ :   T = "if" ~> "[^:]+".r ~ ":" ~ "[^;]+".r  ~ ( "else" ~> ":" ~> "[^;]+".r ).? ^^ { t =>
     val astCond = ExprParser(t._1._1._1)
     val astThen = StatementParser(t._1._2)
@@ -70,12 +72,18 @@ object ExprParser extends RegexParsers {
     }
   }
   def hexNumeral: T     = "0x" ~> "[0-9a-fA-F]+".r ^^ { s =>
-    // FIXME: Parse error
-    ASTIntegerLiteral(Integer.parseInt(s, 16))
+    try ASTIntegerLiteral(Integer.parseInt(s, 16))
+    catch {
+      case e: NumberFormatException =>
+        throw new ParseError("Integer number too large: " + s)
+    }
   }
   def decimalNumeral: T = "[1-9][0-9]*".r ^^ { s =>
-    // FIXME: Parser error
-    ASTIntegerLiteral(Integer.parseInt(s, 10))
+    try ASTIntegerLiteral(Integer.parseInt(s, 10))
+    catch {
+      case e: NumberFormatException =>
+        throw new ParseError("Integer number too large: " + s)
+    }
   }
 
   def variable: T = "[a-zA-Z_]+".r ^^ { ASTVariableReference }
@@ -89,19 +97,19 @@ object ExprParser extends RegexParsers {
 
   def expr: T = (
     simpleExpr ~ "+" ~ expr ^^ {
-      t => ASTIAdd(t._1._1, t._2)
+      case left ~ _ ~ right => ASTIAdd(left, right)
     }
     | simpleExpr ~ "-" ~ expr ^^ {
-      t => ASTISub(t._1._1, t._2)
+      case left ~ _ ~ right => ASTISub(left, right)
     }
     | simpleExpr ~ "*" ~ expr ^^ {
-      t => ASTIMul(t._1._1, t._2)
+      case left ~ _ ~ right => ASTIMul(left, right)
     }
     | simpleExpr ~ "/" ~ expr ^^ {
-      t => ASTIDiv(t._1._1, t._2)
+      case left ~ _ ~ right => ASTIDiv(left, right)
     }
     | simpleExpr ~ "==" ~ expr ^^ {
-      t => ASTEquals(t._1._1, t._2)
+      case left ~ _ ~ right => ASTEquals(left, right)
     }
     | simpleExpr
   )
