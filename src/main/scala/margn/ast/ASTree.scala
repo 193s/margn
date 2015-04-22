@@ -1,7 +1,8 @@
 package margn.ast
 
 
-case class ASTPrint(expr: ASTExpr) extends ASTStatement
+case class ASTPrint(expr: ASTExpr)  extends ASTStatement
+case class ASTAssert(expr: ASTExpr) extends ASTStatement
 case class ASTLet(id: String, expr: ASTExpr) extends ASTStatement
 case class ASTIf(cond: ASTExpr, then: ASTStatement) extends ASTStatement
 case class ASTIfElse(cond: ASTExpr, then: ASTStatement, else_ : ASTStatement) extends ASTStatement

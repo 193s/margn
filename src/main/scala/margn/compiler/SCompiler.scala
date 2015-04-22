@@ -86,6 +86,24 @@ object SCompiler {
         il.append(compileExpr(expr, env))
         il.append(new INVOKEVIRTUAL(println))
 
+      // assert
+      case ASTAssert(expr) =>
+        il.append(compileExpr(expr, env)) // check assertion
+        val target = il.append(new IFEQ(null))
+        // if_then
+        val assert_err = env.cg.addClass("java/lang/AssertionError")
+        val new_assert =
+          env.cg.addMethodref("java/lang/AssertionError", "<init>", "(Ljava/lang/Object;)V")
+        il.append(new NEW(assert_err))
+        il.append(new DUP())
+        il.append(new LDC(env.cg.addString("assertion failed")))
+        il.append(new INVOKESPECIAL(new_assert))
+        il.append(new ATHROW())
+        val last = il.append(new NOP())
+
+        // set target
+        target.setTarget(last)
+
       // let
       case ASTLet(id, expr) =>
         val index = env.createIndex(id)
@@ -133,8 +151,10 @@ object SCompiler {
     val cg = gen.getConstantPool
     val env = new Env(cg)
 
+    // generate instruction list
     val il = new InstructionList()
     il.append(compileProgram(program, env))
+    // return (void)
     il.append(InstructionConstants.RETURN)
 
     // main method

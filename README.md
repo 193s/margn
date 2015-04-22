@@ -40,9 +40,10 @@ program ::= { statement ";" }
 
 #### Statements
 ```ebnf
-statement ::= let | print
-let   ::= "let" id "=" expr
-print ::= "print" expr
+statement ::= let | print | assert
+let    ::= "let" id "=" expr
+print  ::= "print" expr
+assert ::= "assert" expr
 ```
 
 #### Expressions
