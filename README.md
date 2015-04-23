@@ -13,6 +13,9 @@ if a == b: print 0;
 assert a == 100;
 ```
 
+![image](https://cloud.githubusercontent.com/assets/6814758/7298230/26448374-ea09-11e4-9cf4-1e1ef13decd1.png)
+
+
 ## Usage
 compile a script:
 ```sh
