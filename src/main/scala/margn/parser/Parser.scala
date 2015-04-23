@@ -95,23 +95,29 @@ object ExprParser extends RegexParsers {
   | "(" ~> expr <~ ")"
   )
 
-  def expr: T = (
-    simpleExpr ~ "+" ~ expr ^^ {
-      case left ~ _ ~ right => ASTIAdd(left, right)
-    }
-    | simpleExpr ~ "-" ~ expr ^^ {
-      case left ~ _ ~ right => ASTISub(left, right)
-    }
-    | simpleExpr ~ "*" ~ expr ^^ {
-      case left ~ _ ~ right => ASTIMul(left, right)
-    }
-    | simpleExpr ~ "/" ~ expr ^^ {
-      case left ~ _ ~ right => ASTIDiv(left, right)
-    }
-    | simpleExpr ~ "==" ~ expr ^^ {
-      case left ~ _ ~ right => ASTEquals(left, right)
-    }
-    | simpleExpr
-  )
+  def e0: T = e1 ~ "==" ~ e0 ^^ {
+    case left ~ op ~ right =>
+      op match {
+        case "==" => ASTEquals(left, right)
+      }
+  } | e1
+
+  def e1: T = e2 ~ ("+"|"-") ~ e1 ^^ {
+    case left ~ op ~ right =>
+      op match {
+        case "+" => ASTIAdd(left, right)
+        case "-" => ASTISub(left, right)
+      }
+  } | e2
+
+  def e2: T = simpleExpr ~ ("*"|"/") ~ e2 ^^ {
+    case left ~ op ~ right =>
+      op match {
+        case "*" => ASTIMul(left, right)
+        case "/" => ASTIDiv(left, right)
+      }
+  } | simpleExpr
+
+  def expr: T = e0
 }
 
