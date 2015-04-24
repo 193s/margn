@@ -1,4 +1,5 @@
-print 1 + 2 * (2*3);
-let a = 0xcafe;
+let a = 100;
+let b = 0xcafe;
 print a;
-assert a == 10;
+if a == b: print 0;
+assert a != 100;

@@ -95,10 +95,11 @@ object ExprParser extends RegexParsers {
   | "(" ~> expr <~ ")"
   )
 
-  def e0: T = e1 ~ "==" ~ e0 ^^ {
+  def e0: T = e1 ~ ("=="|"!=") ~ e0 ^^ {
     case left ~ op ~ right =>
       op match {
         case "==" => ASTEquals(left, right)
+        case "!=" => ASTNotEquals(left, right)
       }
   } | e1
 

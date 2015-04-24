@@ -58,19 +58,56 @@ object SCompiler {
       case ASTEquals(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
-        // push 0/1
-        val t1 = il.append(new IF_ICMPEQ(null))
-        il.append(new ICONST(0))          // push 0
-        val t2 = il.append(new GOTO(null))
-        // T1:
-        val ih = il.append(new ICONST(1)) // push 1
-        val ih2 = il.append(new NOP())
-        t1.setTarget(ih)
-        t2.setTarget(ih2)
-        // T2: FIN
+        // branch: (l, r) -> [01]
+        il.append(branchIns(
+          new IF_ICMPEQ(null),
+          new InstructionList(new ICONST(0)),
+          new InstructionList(new ICONST(1))
+        ))
+
+      // expr != expr
+      case ASTNotEquals(left, right) =>
+        il.append(compileExpr(left, env))
+        il.append(compileExpr(right, env))
+        // branch: (l, r) -> [01]
+        il.append(branchIns(
+          new IF_ICMPNE(null),
+          new InstructionList(new ICONST(0)),
+          new InstructionList(new ICONST(1))
+        ))
 
       case e => throw new CompileError(s"[FATAL ERROR] Unexpected syntax tree (expr): $e")
     }
+    il
+  }
+
+  /** branch instruction: if-then style */
+  def branchIns(branch_ins: IfInstruction, then: InstructionList) = {
+    val il = new InstructionList()
+    // branch
+    val target = il.append(branch_ins)
+    // then
+    il.append(then)
+    val ih = il.append(new NOP())
+    // set target
+    target.setTarget(ih)
+    il
+  }
+
+  /** branch instruction: if-then-else style */
+  def branchIns(branch_ins: IfInstruction, then: InstructionList, els: InstructionList) = {
+    val il = new InstructionList()
+    // branch
+    val target = il.append(branch_ins)
+    // then
+    il.append(then)
+    val t2 = il.append(new GOTO(null))
+    // else
+    il.append(els)
+    val ih = il.append(new NOP())
+    // set target
+    target.setTarget(t2.getNext)
+    t2.setTarget(ih)
     il
   }
 
@@ -89,20 +126,22 @@ object SCompiler {
       // assert
       case ASTAssert(expr) =>
         il.append(compileExpr(expr, env)) // check assertion
-        val target = il.append(new IFEQ(null))
-        // if_then
         val assert_err = env.cg.addClass("java/lang/AssertionError")
         val new_assert =
           env.cg.addMethodref("java/lang/AssertionError", "<init>", "(Ljava/lang/Object;)V")
-        il.append(new NEW(assert_err))
-        il.append(new DUP())
-        il.append(new LDC(env.cg.addString("assertion failed")))
-        il.append(new INVOKESPECIAL(new_assert))
-        il.append(new ATHROW())
-        val last = il.append(new NOP())
 
-        // set target
-        target.setTarget(last)
+        il.append(branchIns(
+          new IFNE(null),
+          {
+            val l = new InstructionList()
+            l.append(new NEW(assert_err))
+            l.append(new DUP())
+            l.append(new LDC(env.cg.addString("assertion failed")))
+            l.append(new INVOKESPECIAL(new_assert))
+            l.append(new ATHROW())
+            l
+          }
+        ))
 
       // let
       case ASTLet(id, expr) =>
@@ -113,23 +152,19 @@ object SCompiler {
       // if
       case ASTIf(cond, then) =>
         il.append(compileExpr(cond, env))
-        val target = il.append(new IFEQ(null))
-        il.append(compileStatement(then, env))
-        val ih = il.append(new NOP())
-        // set target
-        target.setTarget(ih)
+        il.append(branchIns(
+          new IFEQ(null),
+          compileStatement(then, env)
+        ))
 
       // if - else
-      case ASTIfElse(cond, then, else_) =>
+      case ASTIfElse(cond, then, els) =>
         il.append(compileExpr(cond, env))
-        val target = il.append(new IFEQ(null))
-        il.append(compileStatement(then, env))
-        val t2 = il.append(new GOTO(null))
-        il.append(compileStatement(else_, env))
-        val ih = il.append(new NOP())
-        // set target
-        target.setTarget(t2)
-        t2.setTarget(ih)
+        il.append(branchIns(
+          new IFEQ(null),
+          compileStatement(then, env),
+          compileStatement(els, env)
+        ))
 
       case e => throw new CompileError(s"[FATAL ERROR] Unexpected syntax tree (statement): $e")
     }
