@@ -1,7 +1,7 @@
 package margn.compiler
 
 import margn.ast._
-import margn.parser.ProgramParser
+import margn.parser.Parser
 import org.apache.bcel.generic._
 import org.apache.bcel.Constants._
 
@@ -9,7 +9,7 @@ import scala.collection.mutable
 
 object SCompiler {
   /** compile source code into class file */
-  def compile(classFile: String, code: String): Unit = compile(classFile, ProgramParser(code))
+  def compile(classFile: String, code: String): Unit = compile(classFile, Parser(code))
 
   /** compile expressions */
   def compileExpr(ast: ASTExpr, env: Env): InstructionList = {

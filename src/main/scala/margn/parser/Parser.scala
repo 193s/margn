@@ -5,80 +5,58 @@ import margn.ast._
 import scala.util.parsing.combinator.RegexParsers
 
 
-object ProgramParser extends RegexParsers {
-  type T = Parser[ASTProgram]
+object Parser extends RegexParsers {
+  type Program = Parser[ASTProgram]
+  type Statement = Parser[ASTStatement]
+  type Expr = Parser[ASTExpr]
+
   def apply(str: String): ASTProgram = {
-    val program = ASTProgram(str.split(';').map(StatementParser(_)).toList)
-    program
-    /*
     val opt = parseAll(program, str)
     if (opt.isEmpty) throw new ParseError("failed to parse program")
     opt.get
-    */
   }
 
-  def program: T = repsep(".*".r ^^ { StatementParser(_) }, ";") ^^ { ASTProgram }
-}
+  def program: Program = (statement ~ ";").* ^^ { t => ASTProgram(t.map(_._1)) }
 
-object StatementParser extends RegexParsers {
-  type T = Parser[ASTStatement]
-  def apply(str: String): ASTStatement = {
-    parseAll(statement, str) match {
-      case Success(res, next) => res
-      case NoSuccess(err, next) =>
-        // throw new ParseError(s"$err on line ${next.pos.line} on column ${next.pos.column}")
-       throw new ParseError(err)
-    }
-  }
+  /* statement parsers */
 
-  def print:  T = "print"  ~> ".*".r ^^ { s => ASTPrint(ExprParser(s)) }
-  def assert: T = "assert" ~> ".*".r ^^ { s => ASTAssert(ExprParser(s)) }
-  def let:    T = "let" ~> "[a-zA-Z_]+".r ~ "=" ~ ".*".r ^^ {
-    case left ~ _ ~ expr => ASTLet(left, ExprParser(expr))
+  def print:  Statement = "print"  ~> expr ^^ { ASTPrint }
+  def assert: Statement = "assert" ~> expr ^^ { ASTAssert }
+  def let:    Statement = "let" ~> "[a-zA-Z_]+".r ~ "=" ~ expr ^^ {
+    case left ~ _ ~ expr => ASTLet(left, expr)
   }
-  def if_ :   T = "if" ~> "[^:]+".r ~ ":" ~ "[^;]+".r  ~ ( "else" ~> ":" ~> "[^;]+".r ).? ^^ { t =>
-    val astCond = ExprParser(t._1._1._1)
-    val astThen = StatementParser(t._1._2)
-    val elseOpt = t._2
+  def if_ :   Statement = "if" ~> expr ~ ":" ~ statement ~ ( "else" ~> ":" ~> statement ).? ^^ {
+    case astCond ~ _ ~ astThen ~ opt =>
+    val elseOpt = opt
     if (elseOpt.isEmpty) ASTIf    (astCond, astThen)
-    else                 ASTIfElse(astCond, astThen, StatementParser(elseOpt.get))
+    else                 ASTIfElse(astCond, astThen, elseOpt.get)
   }
-  def statement: T = print | assert | let | if_
-}
+  def statement: Statement = print | assert | let | if_
 
-object ExprParser extends RegexParsers {
-  type T = Parser[ASTExpr]
-  def apply(str: String): ASTExpr = {
-    parseAll(expr, str) match {
-      case Success(res, next) => res
-      case NoSuccess(err, next) =>
-        // throw new ParseError(s"$err on line ${next.pos.line} on column ${next.pos.column}")
-        throw new ParseError(err)
-    }
-  }
+  /* expr parsers */
 
-  def integerLiteral: T = (
+  def integerLiteral: Expr = (
     binaryNumeral
     | hexNumeral
     | decimalNumeral
     | "0" ^^^ ASTIntegerLiteral(0)
     )
 
-  def binaryNumeral: T  = "0b" ~> "[01]+".r ^^ { s =>
+  def binaryNumeral: Expr  = "0b" ~> "[01]+".r ^^ { s =>
     try ASTIntegerLiteral(Integer.parseInt(s, 2))
     catch {
       case e: NumberFormatException =>
         throw new ParseError("Integer number too large: " + s)
     }
   }
-  def hexNumeral: T     = "0x" ~> "[0-9a-fA-F]+".r ^^ { s =>
+  def hexNumeral: Expr     = "0x" ~> "[0-9a-fA-F]+".r ^^ { s =>
     try ASTIntegerLiteral(Integer.parseInt(s, 16))
     catch {
       case e: NumberFormatException =>
         throw new ParseError("Integer number too large: " + s)
     }
   }
-  def decimalNumeral: T = "[1-9][0-9]*".r ^^ { s =>
+  def decimalNumeral: Expr = "[1-9][0-9]*".r ^^ { s =>
     try ASTIntegerLiteral(Integer.parseInt(s, 10))
     catch {
       case e: NumberFormatException =>
@@ -86,16 +64,16 @@ object ExprParser extends RegexParsers {
     }
   }
 
-  def variable: T = "[a-zA-Z_]+".r ^^ { ASTVariableReference }
+  def variable: Expr = "[a-zA-Z_]+".r ^^ { ASTVariableReference }
 
-  def simpleExpr: T = (
+  def simpleExpr: Expr = (
     "-" ~> simpleExpr ^^ { ASTIUnaryMinus }
   | integerLiteral
   | variable
   | "(" ~> expr <~ ")"
   )
 
-  def e0: T = e1 ~ ("=="|"!=") ~ e0 ^^ {
+  def e0: Expr = e1 ~ ("=="|"!=") ~ e0 ^^ {
     case left ~ op ~ right =>
       op match {
         case "==" => ASTEquals(left, right)
@@ -103,7 +81,7 @@ object ExprParser extends RegexParsers {
       }
   } | e1
 
-  def e1: T = e2 ~ ("+"|"-") ~ e1 ^^ {
+  def e1: Expr = e2 ~ ("+"|"-") ~ e1 ^^ {
     case left ~ op ~ right =>
       op match {
         case "+" => ASTIAdd(left, right)
@@ -111,7 +89,7 @@ object ExprParser extends RegexParsers {
       }
   } | e2
 
-  def e2: T = simpleExpr ~ ("*"|"/") ~ e2 ^^ {
+  def e2: Expr = simpleExpr ~ ("*"|"/") ~ e2 ^^ {
     case left ~ op ~ right =>
       op match {
         case "*" => ASTIMul(left, right)
@@ -119,6 +97,6 @@ object ExprParser extends RegexParsers {
       }
   } | simpleExpr
 
-  def expr: T = e0
+  def expr: Expr = e0
 }
 
