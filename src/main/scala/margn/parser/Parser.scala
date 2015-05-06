@@ -2,36 +2,40 @@ package margn.parser
 
 import margn.ast._
 
-import scala.util.parsing.combinator.RegexParsers
+import scala.util.parsing.combinator.JavaTokenParsers
 
 
-object Parser extends RegexParsers {
-  type Program = Parser[ASTProgram]
-  type Statement = Parser[ASTStatement]
+object Parser extends JavaTokenParsers {
+  type Prog = Parser[ASTProgram]
+  type Stat = Parser[ASTStatement]
   type Expr = Parser[ASTExpr]
 
-  def apply(str: String): ASTProgram = {
-    val opt = parseAll(program, str)
-    if (opt.isEmpty) throw new ParseError("failed to parse program")
-    opt.get
-  }
+  def apply(str: String): ASTProgram =
+    parseAll(program, str) match {
+      case Success(res, next) => res
+      case NoSuccess(err, next) => throw new ParseError(err)
+    }
 
-  def program: Program = (statement ~ ";").* ^^ { t => ASTProgram(t.map(_._1)) }
+  // list of statement
+  def program: Prog = statement.* ^^ { ASTProgram }
 
   /* statement parsers */
 
-  def print:  Statement = "print"  ~> expr ^^ { ASTPrint }
-  def assert: Statement = "assert" ~> expr ^^ { ASTAssert }
-  def let:    Statement = "let" ~> "[a-zA-Z_]+".r ~ "=" ~ expr ^^ {
+  def print:  Stat = "print"  ~> expr ^^ { ASTPrint }
+  def assert: Stat = "assert" ~> expr ^^ { ASTAssert }
+  def let:    Stat = "let" ~> ident ~ "=" ~ expr ^^ {
     case left ~ _ ~ expr => ASTLet(left, expr)
   }
-  def if_ :   Statement = "if" ~> expr ~ ":" ~ statement ~ ( "else" ~> ":" ~> statement ).? ^^ {
+  def if_ :   Stat = "if" ~> expr ~ ":" ~ statement ~ ( "else" ~> ":" ~> statement ).? ^^ {
     case astCond ~ _ ~ astThen ~ opt =>
     val elseOpt = opt
     if (elseOpt.isEmpty) ASTIf    (astCond, astThen)
     else                 ASTIfElse(astCond, astThen, elseOpt.get)
   }
-  def statement: Statement = print | assert | let | if_
+  def pass:   Stat = "pass" ^^ { _ => ASTPass() }
+
+  def split = "[;\n]+".r
+  def statement: Stat = (print | assert | let | if_ | pass | failure("<statement>")) <~ split
 
   /* expr parsers */
 
@@ -64,7 +68,7 @@ object Parser extends RegexParsers {
     }
   }
 
-  def variable: Expr = "[a-zA-Z_]+".r ^^ { ASTVariableReference }
+  def variable: Expr = ident ^^ { ASTVariableReference }
 
   def simpleExpr: Expr = (
     "-" ~> simpleExpr ^^ { ASTIUnaryMinus }
@@ -73,11 +77,15 @@ object Parser extends RegexParsers {
   | "(" ~> expr <~ ")"
   )
 
-  def e0: Expr = e1 ~ ("=="|"!=") ~ e0 ^^ {
+  def e0: Expr = e1 ~ ("=="|"!="|">="|">"|"<="|"<") ~ e0 ^^ {
     case left ~ op ~ right =>
       op match {
         case "==" => ASTEquals(left, right)
         case "!=" => ASTNotEquals(left, right)
+        case ">=" => ASTGreaterThanOrEquals(left, right)
+        case ">"  => ASTGreaterThan(left, right)
+        case "<=" => ASTLessThanOrEquals(left, right)
+        case "<"  => ASTLessThan(left, right)
       }
   } | e1
 
@@ -89,13 +97,22 @@ object Parser extends RegexParsers {
       }
   } | e2
 
-  def e2: Expr = simpleExpr ~ ("*"|"/") ~ e2 ^^ {
+  def e2: Expr = e3 ~ ("*"|"/") ~ e2 ^^ {
     case left ~ op ~ right =>
       op match {
         case "*" => ASTIMul(left, right)
         case "/" => ASTIDiv(left, right)
       }
-  } | simpleExpr
+  } | e3
+
+  def e3 = e4
+  def e4 = e5
+  def e5 = e6
+  def e6 = e7
+  def e7 = e8
+  def e8 = e9
+  def e9 = e10
+  def e10 = simpleExpr
 
   def expr: Expr = e0
 }

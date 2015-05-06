@@ -76,6 +76,50 @@ object SCompiler {
           new InstructionList(new ICONST(1))
         ))
 
+      // expr >= expr
+      case ASTGreaterThanOrEquals(left, right) =>
+        il.append(compileExpr(left, env))
+        il.append(compileExpr(right, env))
+        // branch: (l, r) -> [01]
+        il.append(branchIns(
+          new IF_ICMPGE(null),
+          new InstructionList(new ICONST(0)),
+          new InstructionList(new ICONST(1))
+        ))
+
+      // expr > expr
+      case ASTGreaterThan(left, right) =>
+        il.append(compileExpr(left, env))
+        il.append(compileExpr(right, env))
+        // branch: (l, r) -> [01]
+        il.append(branchIns(
+          new IF_ICMPGT(null),
+          new InstructionList(new ICONST(0)),
+          new InstructionList(new ICONST(1))
+        ))
+
+      // expr <= expr
+      case ASTLessThanOrEquals(left, right) =>
+        il.append(compileExpr(left, env))
+        il.append(compileExpr(right, env))
+        // branch: (l, r) -> [01]
+        il.append(branchIns(
+          new IF_ICMPLE(null),
+          new InstructionList(new ICONST(0)),
+          new InstructionList(new ICONST(1))
+        ))
+
+      // expr < expr
+      case ASTLessThan(left, right) =>
+        il.append(compileExpr(left, env))
+        il.append(compileExpr(right, env))
+        // branch: (l, r) -> [01]
+        il.append(branchIns(
+          new IF_ICMPLT(null),
+          new InstructionList(new ICONST(0)),
+          new InstructionList(new ICONST(1))
+        ))
+
       case e => throw new CompileError(s"[FATAL ERROR] Unexpected syntax tree (expr): $e")
     }
     il
