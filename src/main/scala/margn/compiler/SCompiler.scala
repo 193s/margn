@@ -2,10 +2,26 @@ package margn.compiler
 
 import margn.ast._
 import margn.parser.Parser
+import margn.types.DType
 import org.apache.bcel.generic._
 import org.apache.bcel.Constants._
 
 import scala.collection.mutable
+
+
+class Env(val cg: ConstantPoolGen) {
+  private var maxIndex = 0
+  private val namespace = mutable.Map[String, Int]()
+
+  def createIndex(name: String): Int = {
+    val index = maxIndex
+    namespace += name -> index
+    maxIndex += 1
+    index
+  }
+  def getIndex(name: String) = namespace(name)
+}
+
 
 object SCompiler {
   /** compile source code into class file */
@@ -15,9 +31,13 @@ object SCompiler {
   def compileExpr(ast: ASTExpr, env: Env): InstructionList = {
     val il = new InstructionList()
     ast match {
-      // integer literal
-      case ASTIntegerLiteral(value) =>
+      // integer
+      case ASTInteger(value) =>
         il.append(new PUSH(env.cg, value))
+
+      // string
+      case ASTString(string) =>
+        il.append(new PUSH(env.cg, string))
 
       // variable
       case ASTVariableReference(id) =>
@@ -126,7 +146,7 @@ object SCompiler {
   }
 
   /** branch instruction: if-then style */
-  def branchIns(branch_ins: IfInstruction, then: InstructionList) = {
+  private def branchIns(branch_ins: IfInstruction, then: InstructionList) = {
     val il = new InstructionList()
     // branch
     val target = il.append(branch_ins)
@@ -139,7 +159,7 @@ object SCompiler {
   }
 
   /** branch instruction: if-then-else style */
-  def branchIns(branch_ins: IfInstruction, then: InstructionList, els: InstructionList) = {
+  private def branchIns(branch_ins: IfInstruction, then: InstructionList, els: InstructionList) = {
     val il = new InstructionList()
     // branch
     val target = il.append(branch_ins)
@@ -162,10 +182,15 @@ object SCompiler {
       // print
       case ASTPrint(expr) =>
         val out = env.cg.addFieldref("java.lang.System", "out", "Ljava/io/PrintStream;")
-        val println = env.cg.addMethodref("java.io.PrintStream", "println", "(I)V")
+        val sig = expr._type_ match {
+          case DType.Integer => "(I)V"
+          case DType.String  => "(Ljava/lang/String;)V"
+          case any           => "(Ljava/lang/Object;)V"
+        }
+        val sys_println = env.cg.addMethodref("java.io.PrintStream", "println", sig)
         il.append(new GETSTATIC(out))
         il.append(compileExpr(expr, env))
-        il.append(new INVOKEVIRTUAL(println))
+        il.append(new INVOKEVIRTUAL(sys_println))
 
       // assert
       case ASTAssert(expr) =>
@@ -250,17 +275,4 @@ object SCompiler {
     // dump
     gen.getJavaClass.dump(classFile + ".class")
   }
-}
-
-class Env(val cg: ConstantPoolGen) {
-  private var maxIndex = 0
-  private val variableTable = mutable.Map[String, Int]()
-
-  def createIndex(name: String): Int = {
-    val index = maxIndex
-    variableTable += name -> index
-    maxIndex += 1
-    index
-  }
-  def getIndex(name: String) = variableTable(name)
 }

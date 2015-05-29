@@ -43,36 +43,44 @@ object Parser extends JavaTokenParsers {
     binaryNumeral
     | hexNumeral
     | decimalNumeral
-    | "0" ^^^ ASTIntegerLiteral(0)
+    | "0" ^^^ ASTInteger(0)
     )
 
   def binaryNumeral: Expr  = "0b" ~> "[01]+".r ^^ { s =>
-    try ASTIntegerLiteral(Integer.parseInt(s, 2))
+    try ASTInteger(Integer.parseInt(s, 2))
     catch {
       case e: NumberFormatException =>
         throw new ParseError("Integer number too large: " + s)
     }
   }
   def hexNumeral: Expr     = "0x" ~> "[0-9a-fA-F]+".r ^^ { s =>
-    try ASTIntegerLiteral(Integer.parseInt(s, 16))
+    try ASTInteger(Integer.parseInt(s, 16))
     catch {
       case e: NumberFormatException =>
         throw new ParseError("Integer number too large: " + s)
     }
   }
   def decimalNumeral: Expr = "[1-9][0-9]*".r ^^ { s =>
-    try ASTIntegerLiteral(Integer.parseInt(s, 10))
+    try ASTInteger(Integer.parseInt(s, 10))
     catch {
       case e: NumberFormatException =>
         throw new ParseError("Integer number too large: " + s)
     }
   }
 
+  private val p_quote = "\"(.*)\"".r
+  def stringLit: Expr = stringLiteral ^^ {
+    case p_quote(s) => ASTString(s)
+    case s => ASTString(s)
+  }
+
+  def literal: Expr = integerLiteral | stringLit
+
   def variable: Expr = ident ^^ { ASTVariableReference }
 
   def simpleExpr: Expr = (
     "-" ~> simpleExpr ^^ { ASTIUnaryMinus }
-  | integerLiteral
+  | literal
   | variable
   | "(" ~> expr <~ ")"
   )
