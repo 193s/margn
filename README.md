@@ -42,37 +42,61 @@ See Issues: https://github.com/193s/margn/issues
 
 ## Specification
 
-#### Program
+### Program
 ```ebnf
 program ::= { statement ";" }
 ```
+`Program` is a sequence of Statements, splitted by ';'.
 
-#### Statements
+### Statements
 ```ebnf
 statement ::= let | print | if | assert
-if     ::= "if" expr ":" statement
-let    ::= "let" id "=" expr
+```
+#### print
+```ebnf
 print  ::= "print" expr
+```
+prints \<expr\> with EOL
+
+#### assert
+```ebnf
 assert ::= "assert" expr
 ```
+evaluates \<expr\> and throws an `AssertionError` if it is `False`.
 
-#### Expressions
+#### other statements
+```
+if     ::= "if" expr ":" statement
+let    ::= "let" id "=" expr
+```
+
+### Expressions
 ```ebnf
 expr ::= expr "+" expr
        | expr "-" expr
        | expr "*" expr
        | expr "/" expr
        | expr "==" expr
+       | ...
        | simpleExpr
 
 simpleExpr ::= "-" simpleExpr
-             | integerLiteral
+             | literal
              | variable
              | "(" expr ")"
+```
 
+### Types and Literals
+#### Integer
+```ebnf
 integerLiteral ::= [1-9][0-9]*
                  | 0x[0-9a-fA-F]+
                  | 0b[01]+
+```
+
+#### String
+```ebnf
+stringLiteral ::= '"' .* '"'
 ```
 
 
