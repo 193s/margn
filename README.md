@@ -29,8 +29,10 @@ $ java script
 `margn --help` for more information.
 
 ## Install
-`$ git clone https://github.com/193s/margn.git && cd margn`, then  
-`$ sbt assembly` to generate `./margn` (executable file)
+1. `$ git clone https://github.com/193s/margn.git && cd margn`
+2. `$ sbt assembly`  
+> An executable sh file `./margn` (contains jar) will be generated
+3. (Optional) add the current directory to the PATH, or simply copy it to `/usr/local/bin`.
 
 #### Requirements
 - Scala
@@ -48,6 +50,7 @@ program ::= { statement ";" }
 ```
 `Program` is a sequence of Statements, splitted by ';'.
 
+
 ### Statements
 ```ebnf
 statement ::= let | print | if | assert
@@ -64,11 +67,19 @@ assert ::= "assert" expr
 ```
 evaluates \<expr\> and throws an `AssertionError` if it is `False`.
 
-#### other statements
-```
-if     ::= "if" expr ":" statement
+#### let
+```ebnf
 let    ::= "let" id "=" expr
 ```
+creates a readonly variable called `id`.
+
+#### if
+```ebnf
+if     ::= "if" expr ":" statement
+```
+evaluates \<statement\> if \<expr\> is `True`
+
+
 
 ### Expressions
 ```ebnf
@@ -93,6 +104,7 @@ integerLiteral ::= [1-9][0-9]*
                  | 0x[0-9a-fA-F]+
                  | 0b[01]+
 ```
+
 
 #### String
 ```ebnf
