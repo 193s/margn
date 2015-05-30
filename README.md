@@ -6,14 +6,14 @@
 margn is a JVM-based scripting language that compiles into Java class file.  
 
 ```c
-let a = 100;
-let b = 0xcafe;
+print "hello!";
+print "10 + 20 * 3 = ";
+let a = 10 + 20*3;
 print a;
-if a == b: print 0;
-assert a == 100;
+assert a == 70;
 ```
 
-![image](https://cloud.githubusercontent.com/assets/6814758/7298230/26448374-ea09-11e4-9cf4-1e1ef13decd1.png)
+![ss 2015-05-30 at 22 01 27](https://cloud.githubusercontent.com/assets/6814758/7897456/7c107b3e-0717-11e5-969f-68480924d97f.png)
 
 
 ## Usage
@@ -28,7 +28,7 @@ $ java script
 
 `margn --help` for more information.
 
-## Install
+## Installation
 1. `$ git clone https://github.com/193s/margn.git && cd margn`
 2. `$ sbt assembly`  
 > An executable sh file `./margn` (contains jar) will be generated
@@ -98,13 +98,17 @@ simpleExpr ::= "-" simpleExpr
 ```
 
 ### Types and Literals
-#### Integer
+#### Int (Integer)
 ```ebnf
 integerLiteral ::= [1-9][0-9]*
                  | 0x[0-9a-fA-F]+
                  | 0b[01]+
 ```
 
+#### Bool (Boolean)
+```ebnf
+booleanLiteral ::= "true" | "false"
+```
 
 #### String
 ```ebnf
