@@ -2,9 +2,9 @@ package margn.compiler
 
 import margn.ast._
 import margn.parser.Parser
-import margn.types.DType
-import org.apache.bcel.generic._
+import margn.types.DType.{DBoolean, DInteger, DString}
 import org.apache.bcel.Constants._
+import org.apache.bcel.generic._
 
 import scala.collection.mutable
 
@@ -31,8 +31,12 @@ object SCompiler {
   def compileExpr(ast: ASTExpr, env: Env): InstructionList = {
     val il = new InstructionList()
     ast match {
-      // integer
+      // int
       case ASTInteger(value) =>
+        il.append(new PUSH(env.cg, value))
+
+      // bool
+      case ASTBoolean(value) =>
         il.append(new PUSH(env.cg, value))
 
       // string
@@ -183,9 +187,10 @@ object SCompiler {
       case ASTPrint(expr) =>
         val out = env.cg.addFieldref("java.lang.System", "out", "Ljava/io/PrintStream;")
         val sig = expr._type_ match {
-          case DType.Integer => "(I)V"
-          case DType.String  => "(Ljava/lang/String;)V"
-          case any           => "(Ljava/lang/Object;)V"
+          case DInteger => "(I)V"
+          case DString  => "(Ljava/lang/String;)V"
+          case DBoolean => "(Z)V"
+          case any      => "(Ljava/lang/Object;)V"
         }
         val sys_println = env.cg.addMethodref("java.io.PrintStream", "println", sig)
         il.append(new GETSTATIC(out))

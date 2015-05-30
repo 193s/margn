@@ -16,7 +16,7 @@ object Parser extends JavaTokenParsers {
       case NoSuccess(err, next) => throw new ParseError(err)
     }
 
-  // list of statement
+  // sequence of statement
   def program: Prog = statement.* ^^ { ASTProgram }
 
   /* statement parsers */
@@ -39,44 +39,6 @@ object Parser extends JavaTokenParsers {
 
   /* expr parsers */
 
-  def integerLiteral: Expr = (
-    binaryNumeral
-    | hexNumeral
-    | decimalNumeral
-    | "0" ^^^ ASTInteger(0)
-    )
-
-  def binaryNumeral: Expr  = "0b" ~> "[01]+".r ^^ { s =>
-    try ASTInteger(Integer.parseInt(s, 2))
-    catch {
-      case e: NumberFormatException =>
-        throw new ParseError("Integer number too large: " + s)
-    }
-  }
-  def hexNumeral: Expr     = "0x" ~> "[0-9a-fA-F]+".r ^^ { s =>
-    try ASTInteger(Integer.parseInt(s, 16))
-    catch {
-      case e: NumberFormatException =>
-        throw new ParseError("Integer number too large: " + s)
-    }
-  }
-  def decimalNumeral: Expr = "[1-9][0-9]*".r ^^ { s =>
-    try ASTInteger(Integer.parseInt(s, 10))
-    catch {
-      case e: NumberFormatException =>
-        throw new ParseError("Integer number too large: " + s)
-    }
-  }
-
-  private val p_quote = "\"(.*)\"".r
-  def stringLit: Expr = stringLiteral ^^ {
-    case p_quote(s) => ASTString(s)
-    case s => ASTString(s)
-  }
-
-  def literal: Expr = integerLiteral | stringLit
-
-  def variable: Expr = ident ^^ { ASTVariableReference }
 
   def simpleExpr: Expr = (
     "-" ~> simpleExpr ^^ { ASTIUnaryMinus }
@@ -123,5 +85,39 @@ object Parser extends JavaTokenParsers {
   def e10 = simpleExpr
 
   def expr: Expr = e0
+  def variable: Expr = ident ^^ { ASTVariableReference }
+
+
+
+  /* literals */
+  def literal: Expr = integerLiteral | stringLit | booleanLiteral
+
+  def integerLiteral: Expr = (
+    binaryNumeral
+      | hexNumeral
+      | decimalNumeral
+      | "0" ^^^ ASTInteger(0)
+    )
+
+  // parseInt
+  private def parseIntWithParseError(s: String, base: Int) =
+    try ASTInteger(Integer.parseInt(s, base))
+    catch {
+      case e: NumberFormatException =>
+        throw new ParseError("Integer number too large: " + s)
+    }
+  def binaryNumeral : Expr = "0b" ~> "[01]+".r        ^^ { parseIntWithParseError(_, 2) }
+  def hexNumeral    : Expr = "0x" ~> "[0-9a-fA-F]+".r ^^ { parseIntWithParseError(_, 16) }
+  def decimalNumeral: Expr = "[1-9][0-9]*".r          ^^ { parseIntWithParseError(_, 10) }
+
+
+  private val p_quote = "\"(.*)\"".r
+  def stringLit: Expr = stringLiteral ^^ {
+    case p_quote(s) => ASTString(s)
+    case s          => ASTString(s)
+  }
+
+  def booleanLiteral: Expr = ("true" ^^^ true | "false" ^^^ false) ^^ { ASTBoolean }
+
 }
 
