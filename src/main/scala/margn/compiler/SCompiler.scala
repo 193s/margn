@@ -183,6 +183,14 @@ object SCompiler {
   def compileStatement(ast: ASTStatement, env: Env): InstructionList = {
     val il = new InstructionList()
     ast match {
+      case ASTBlock(children) =>
+        // compile and append all statements
+        for (stat <- children) il.append(compileStatement(stat, env))
+
+      case ASTPass() =>
+        // null operation
+        il.append(new NOP())
+
       // print
       case ASTPrint(expr) =>
         val out = env.cg.addFieldref("java.lang.System", "out", "Ljava/io/PrintStream;")

@@ -21,12 +21,18 @@ object Parser extends JavaTokenParsers {
 
   /* statement parsers */
 
+  // stat + split
+  def statement: Stat = stat <~ split
+  def stat: Stat = block | print | assert | let | if_ | pass | failure("<statement>")
+  def split = "[;\n]+".r
+
+  def block:  Stat = "{" ~> program <~ "}" ^^ { p => ASTBlock(p.children) }
   def print:  Stat = "print"  ~> expr ^^ { ASTPrint }
   def assert: Stat = "assert" ~> expr ^^ { ASTAssert }
   def let:    Stat = "let" ~> ident ~ "=" ~ expr ^^ {
     case left ~ _ ~ expr => ASTLet(left, expr)
   }
-  def if_ :   Stat = "if" ~> expr ~ ":" ~ statement ~ ( "else" ~> ":" ~> statement ).? ^^ {
+  def if_ :   Stat = "if" ~> expr ~ ":" ~ stat ~ ( split ~> "else" ~> ":" ~> stat ).? ^^ {
     case astCond ~ _ ~ astThen ~ opt =>
     val elseOpt = opt
     if (elseOpt.isEmpty) ASTIf    (astCond, astThen)
@@ -34,18 +40,21 @@ object Parser extends JavaTokenParsers {
   }
   def pass:   Stat = "pass" ^^ { _ => ASTPass() }
 
-  def split = "[;\n]+".r
-  def statement: Stat = (print | assert | let | if_ | pass | failure("<statement>")) <~ split
+
 
   /* expr parsers */
 
+  def expr: Expr = e0
 
   def simpleExpr: Expr = (
     "-" ~> simpleExpr ^^ { ASTIUnaryMinus }
   | literal
   | variable
   | "(" ~> expr <~ ")"
+  | failure("<simpleExpr>")
   )
+
+  def variable: Expr = ident ^^ { ASTVariableReference }
 
   def e0: Expr = e1 ~ ("=="|"!="|">="|">"|"<="|"<") ~ e0 ^^ {
     case left ~ op ~ right =>
@@ -84,8 +93,6 @@ object Parser extends JavaTokenParsers {
   def e9 = e10
   def e10 = simpleExpr
 
-  def expr: Expr = e0
-  def variable: Expr = ident ^^ { ASTVariableReference }
 
 
 

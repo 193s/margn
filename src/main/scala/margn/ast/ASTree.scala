@@ -5,6 +5,8 @@ import margn.types.DType._
 
 
 // == Statement == //
+case class ASTBlock(children: Seq[ASTStatement]) extends ASTStatement
+
 case class ASTPass()                extends ASTStatement
 case class ASTPrint(expr: ASTExpr)  extends ASTStatement
 case class ASTAssert(expr: ASTExpr) extends ASTStatement

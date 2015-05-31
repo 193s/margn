@@ -6,11 +6,15 @@
 margn is a JVM-based scripting language that compiles into Java class file.  
 
 ```c
-print "hello!";
-print "10 + 20 * 3 = ";
-let a = 10 + 20*3;
-print a;
-assert a == 70;
+let a = 100;
+print "a == 100:";
+
+if a == 100 : {
+  print "yes";
+  print "a =";
+  print a;
+};
+else        : print "no";
 ```
 
 ![ss 2015-05-30 at 22 01 27](https://cloud.githubusercontent.com/assets/6814758/7897456/7c107b3e-0717-11e5-969f-68480924d97f.png)
@@ -53,13 +57,19 @@ program ::= { statement ";" }
 
 ### Statements
 ```ebnf
-statement ::= let | print | if | assert
+statement ::= block | print | assert | let | if | pass
 ```
 #### print
 ```ebnf
 print  ::= "print" expr
 ```
 prints \<expr\> with EOL
+
+#### pass
+```ebnf
+pass ::= "pass"
+```
+null operation
 
 #### assert
 ```ebnf
@@ -72,6 +82,12 @@ evaluates \<expr\> and throws an `AssertionError` if it is `False`.
 let    ::= "let" id "=" expr
 ```
 creates a readonly variable called `id`.
+
+#### block
+```ebnf
+block ::= "{" program "}"
+```
+block statements
 
 #### if
 ```ebnf
