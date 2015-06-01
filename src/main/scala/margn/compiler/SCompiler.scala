@@ -53,10 +53,8 @@ object SCompiler {
       case ASTIUnaryMinus(expr) =>
         expr._type_ match {
           case DInt =>
-            // 0 - expr
-            il.append(new PUSH(env.cg, 0))
             il.append(compileExpr(expr, env))
-            il.append(new ISUB())
+            il.append(new INEG())
 
           case any => typeError(s"- <int> : $any")
         }
