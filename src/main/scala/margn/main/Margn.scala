@@ -2,7 +2,7 @@ package margn.main
 
 import java.lang.System.err
 import java.io.File
-import margn.compiler.{CompileError, SCompiler}
+import margn.compiler.{TypeError, CompileError, SCompiler}
 import margn.parser.ParseError
 import scala.io.Source
 
@@ -43,6 +43,12 @@ object Margn {
           // Compile Error
           case e: CompileError =>
             err.println("compile error:")
+            err.println(e.getMessage)
+            sys.exit(-1)
+
+          // Type Error
+          case e: TypeError =>
+            err.println("type error:")
             err.println(e.getMessage)
             sys.exit(-1)
         }

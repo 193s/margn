@@ -46,8 +46,10 @@ object Parser extends JavaTokenParsers {
 
   def expr: Expr = e0
 
+  def unaryOp: Expr = "-" ~> simpleExpr ^^ { ASTIUnaryMinus }
+
   def simpleExpr: Expr = (
-    "-" ~> simpleExpr ^^ { ASTIUnaryMinus }
+    unaryOp
   | literal
   | variable
   | "(" ~> expr <~ ")"
@@ -56,35 +58,62 @@ object Parser extends JavaTokenParsers {
 
   def variable: Expr = ident ^^ { ASTVariableReference }
 
-  def e0: Expr = e1 ~ ("=="|"!="|">="|">"|"<="|"<") ~ e0 ^^ {
-    case left ~ op ~ right =>
-      op match {
-        case "==" => ASTEquals(left, right)
-        case "!=" => ASTNotEquals(left, right)
-        case ">=" => ASTGreaterThanOrEquals(left, right)
-        case ">"  => ASTGreaterThan(left, right)
-        case "<=" => ASTLessThanOrEquals(left, right)
-        case "<"  => ASTLessThan(left, right)
-      }
+
+  // op_level -> (op -> ref)
+  private val ops: Map[Int, Map[String, (ASTExpr, ASTExpr) => ASTOperator]] = Map (
+    0 -> Map (
+      "and" -> ASTAnd,
+      "or"  -> ASTOr
+    ),
+    1 -> Map (
+      "==" -> AST_EQ,
+      "!=" -> AST_NE,
+      ">=" -> AST_GE,
+      ">"  -> AST_GT,
+      "<=" -> AST_LE
+    ),
+    2 -> Map (
+      "+"  -> ASTPlus,
+      "-"  -> ASTMinus
+    ),
+    3 -> Map (
+      "*"  -> ASTMultiply,
+      "/"  -> ASTDivide
+    ),
+    4 -> Map(),
+    5 -> Map(),
+    6 -> Map(),
+    7 -> Map(),
+    8 -> Map(),
+    9 -> Map(),
+    10 -> Map()
+  )
+
+  private def biOp(priority: Int)(op: String)(left: ASTExpr, right: ASTExpr): ASTOperator = ops(priority)(op)(left, right)
+  // List(a, b, c, ...) -> Parser(a | b | c, ...)
+  private def string_or_parser(list: List[String]): Parser[String] = {
+    // list.reduceLeft((l: Parser[String], r: String) => l | r)
+    var ret: Parser[String] = list.head
+    for (s <- list.tail) ret = ret | s
+    ret
+  }
+  private def op(priority: Int): Parser[String] = string_or_parser(ops(priority).keys.toList)
+
+  def e0: Expr = e1 ~ op(0) ~ e0 ^^ {
+    case left ~ op ~ right => biOp(0)(op)(left, right)
   } | e1
 
-  def e1: Expr = e2 ~ ("+"|"-") ~ e1 ^^ {
-    case left ~ op ~ right =>
-      op match {
-        case "+" => ASTIAdd(left, right)
-        case "-" => ASTISub(left, right)
-      }
+  def e1: Expr = e2 ~ op(1) ~ e1 ^^ {
+    case left ~ op ~ right => biOp(1)(op)(left, right)
   } | e2
 
-  def e2: Expr = e3 ~ ("*"|"/") ~ e2 ^^ {
-    case left ~ op ~ right =>
-      op match {
-        case "*" => ASTIMul(left, right)
-        case "/" => ASTIDiv(left, right)
-      }
+  def e2: Expr = e3 ~ op(2) ~ e2 ^^ {
+    case left ~ op ~ right => biOp(2)(op)(left, right)
   } | e3
 
-  def e3 = e4
+  def e3: Expr = e4 ~ op(3) ~ e3 ^^ {
+    case left ~ op ~ right => biOp(3)(op)(left, right)
+  } | e4
   def e4 = e5
   def e5 = e6
   def e6 = e7

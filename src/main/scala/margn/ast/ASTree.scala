@@ -15,24 +15,31 @@ case class ASTIf(cond: ASTExpr, then: ASTStatement) extends ASTStatement
 case class ASTIfElse(cond: ASTExpr, then: ASTStatement, else_ : ASTStatement) extends ASTStatement
 
 // == Expr == //
-case class ASTVariableReference(id: String) extends ASTExpr(DInteger)
+case class ASTVariableReference(id: String) extends ASTExpr(DInt)
 
 abstract class ASTLiteral(_type_ : DType) extends ASTExpr(_type_)
-case class ASTInteger(value: Int)     extends ASTLiteral(DInteger)
-case class ASTBoolean(value: Boolean) extends ASTLiteral(DBoolean)
+case class ASTInteger(value: Int)     extends ASTLiteral(DInt)
+case class ASTBoolean(value: Boolean) extends ASTLiteral(DBool)
 case class ASTString(value: String)   extends ASTLiteral(DString)
 
-abstract class ASTOperator extends ASTExpr(DInteger)
-case class ASTEquals(left: ASTExpr, right: ASTExpr)              extends ASTOperator
-case class ASTNotEquals(left: ASTExpr, right: ASTExpr)           extends ASTOperator
-case class ASTGreaterThanOrEquals(left: ASTExpr, right: ASTExpr) extends ASTOperator
-case class ASTGreaterThan(left: ASTExpr, right: ASTExpr)         extends ASTOperator
-case class ASTLessThanOrEquals(left: ASTExpr, right: ASTExpr)    extends ASTOperator
-case class ASTLessThan(left: ASTExpr, right: ASTExpr)            extends ASTOperator
+abstract class ASTOperator(_type_ : DType) extends ASTExpr(_type_)
+abstract class ASTBiOperator(_type_ : DType)(left: ASTExpr, right: ASTExpr) extends ASTOperator(_type_)
 
-case class ASTIUnaryMinus(expr: ASTExpr) extends ASTOperator
-case class ASTIAdd(left: ASTExpr, right: ASTExpr) extends ASTOperator
-case class ASTISub(left: ASTExpr, right: ASTExpr) extends ASTOperator
-case class ASTIMul(left: ASTExpr, right: ASTExpr) extends ASTOperator
-case class ASTIDiv(left: ASTExpr, right: ASTExpr) extends ASTOperator
+abstract class ASTCompare(left: ASTExpr, right: ASTExpr) extends ASTBiOperator(DBool)(left, right)
+case class ASTAnd(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
+case class ASTOr (left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
+
+case class AST_EQ(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
+case class AST_NE(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
+case class AST_GE(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
+case class AST_GT(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
+case class AST_LE(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
+case class AST_LT(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
+
+abstract class ASTIOperator extends ASTOperator(DInt)
+case class ASTIUnaryMinus(expr: ASTExpr) extends ASTIOperator
+case class ASTPlus(left: ASTExpr, right: ASTExpr)     extends ASTIOperator
+case class ASTMinus(left: ASTExpr, right: ASTExpr)    extends ASTIOperator
+case class ASTMultiply(left: ASTExpr, right: ASTExpr) extends ASTIOperator
+case class ASTDivide(left: ASTExpr, right: ASTExpr)   extends ASTIOperator
 

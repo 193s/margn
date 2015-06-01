@@ -2,7 +2,7 @@ package margn.compiler
 
 import margn.ast._
 import margn.parser.Parser
-import margn.types.DType.{DBoolean, DInteger, DString}
+import margn.types.DType.{DBool, DInt, DString}
 import org.apache.bcel.Constants._
 import org.apache.bcel.generic._
 
@@ -27,6 +27,8 @@ object SCompiler {
   /** compile source code into class file */
   def compile(classFile: String, code: String): Unit = compile(classFile, Parser(code))
 
+  private def compileError(msg: String = "") = throw new CompileError(msg)
+  private def typeError   (msg: String = "") = throw new TypeError(msg)
   /** compile expressions */
   def compileExpr(ast: ASTExpr, env: Env): InstructionList = {
     val il = new InstructionList()
@@ -49,37 +51,56 @@ object SCompiler {
 
       // - expr
       case ASTIUnaryMinus(expr) =>
-        // 0 - expr
-        il.append(new PUSH(env.cg, 0))
-        il.append(compileExpr(expr, env))
-        il.append(new ISUB())
+        expr._type_ match {
+          case DInt =>
+            // 0 - expr
+            il.append(new PUSH(env.cg, 0))
+            il.append(compileExpr(expr, env))
+            il.append(new ISUB())
+
+          case any => typeError(s"- <int> : $any")
+        }
 
       // expr + expr
-      case ASTIAdd(left, right) =>
+      case ASTPlus(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         il.append(new IADD())
 
       // expr - expr
-      case ASTISub(left, right) =>
+      case ASTMinus(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         il.append(new ISUB())
 
       // expr * expr
-      case ASTIMul(left, right) =>
+      case ASTMultiply(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         il.append(new IMUL())
 
       // expr / expr
-      case ASTIDiv(left, right) =>
+      case ASTDivide(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         il.append(new IDIV())
 
+      // expr and expr
+      case ASTAnd(left, right) =>
+        il.append(compileExpr(left, env))
+        il.append(compileExpr(right, env))
+        // branch: (l, r) -> [01]
+        il.append(new IAND())
+
+      // expr or expr
+      case ASTAnd(left, right) =>
+        il.append(compileExpr(left, env))
+        il.append(compileExpr(right, env))
+        // branch: (l, r) -> [01]
+        il.append(new IOR())
+
       // expr == expr
-      case ASTEquals(left, right) =>
+      case AST_EQ(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         // branch: (l, r) -> [01]
@@ -90,7 +111,7 @@ object SCompiler {
         ))
 
       // expr != expr
-      case ASTNotEquals(left, right) =>
+      case AST_NE(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         // branch: (l, r) -> [01]
@@ -101,7 +122,7 @@ object SCompiler {
         ))
 
       // expr >= expr
-      case ASTGreaterThanOrEquals(left, right) =>
+      case AST_GE(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         // branch: (l, r) -> [01]
@@ -112,7 +133,7 @@ object SCompiler {
         ))
 
       // expr > expr
-      case ASTGreaterThan(left, right) =>
+      case AST_GT(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         // branch: (l, r) -> [01]
@@ -123,7 +144,7 @@ object SCompiler {
         ))
 
       // expr <= expr
-      case ASTLessThanOrEquals(left, right) =>
+      case AST_LE(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         // branch: (l, r) -> [01]
@@ -134,7 +155,7 @@ object SCompiler {
         ))
 
       // expr < expr
-      case ASTLessThan(left, right) =>
+      case AST_LT(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         // branch: (l, r) -> [01]
@@ -195,9 +216,9 @@ object SCompiler {
       case ASTPrint(expr) =>
         val out = env.cg.addFieldref("java.lang.System", "out", "Ljava/io/PrintStream;")
         val sig = expr._type_ match {
-          case DInteger => "(I)V"
+          case DInt => "(I)V"
           case DString  => "(Ljava/lang/String;)V"
-          case DBoolean => "(Z)V"
+          case DBool => "(Z)V"
           case any      => "(Ljava/lang/Object;)V"
         }
         val sys_println = env.cg.addMethodref("java.io.PrintStream", "println", sig)
