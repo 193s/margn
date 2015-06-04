@@ -46,7 +46,7 @@ $ java script
 ## TODO
 See Issues: https://github.com/193s/margn/issues
 
-## Specification
+## Language Reference
 
 ### Program
 ```ebnf
@@ -99,32 +99,48 @@ evaluates \<statement\> if \<expr\> is `True`
 
 ### Expressions
 ```ebnf
-expr ::= expr "+" expr
-       | expr "-" expr
-       | expr "*" expr
-       | expr "/" expr
-       | expr "==" expr
-       | ...
-       | simpleExpr
-
-simpleExpr ::= "-" simpleExpr
-             | literal
-             | variable
-             | "(" expr ")"
+expr ::= expr op expr
+       | "-" simpleExpr
+       | literal
+       | variable
+       | "(" expr ")"
 ```
 
+#### Operators
+##### Unary Operators
+```ebnf
+unary_op ::=  "-" expr
+```
+
+##### Binary Operators
+```ebnf
+bi_op ::= expr op expr
+op    ::= "+" | "-" | "==" | ...
+```
+
+| Precedence | Op            | Description                 |
+|:-----------|:--------------|-----------------------------|
+| 0          | and or        | logical and/or              |
+| 1          | == !=         | compare                     |
+|            | > >= < <=     |                             |
+| 2          | + -           | addition and subtraction    |
+| 3          | * /           | multiplication and division |
+
+
 ### Types and Literals
-#### Int (Integer)
+#### Int
 ```ebnf
 integerLiteral ::= [1-9][0-9]*
                  | 0x[0-9a-fA-F]+
                  | 0b[01]+
 ```
+32-bit integer (range: `-2147483648` ~ `2147483647`)
 
-#### Bool (Boolean)
+#### Bool
 ```ebnf
 booleanLiteral ::= "true" | "false"
 ```
+Logical type
 
 #### String
 ```ebnf
