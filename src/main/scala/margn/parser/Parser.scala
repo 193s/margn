@@ -68,9 +68,12 @@ object Parser extends JavaTokenParsers {
     1 -> Map (
       "==" -> AST_EQ,
       "!=" -> AST_NE,
+
       ">=" -> AST_GE,
       ">"  -> AST_GT,
-      "<=" -> AST_LE
+
+      "<=" -> AST_LE,
+      "<"  -> AST_LT
     ),
     2 -> Map (
       "+"  -> ASTPlus,

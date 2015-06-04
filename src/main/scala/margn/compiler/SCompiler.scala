@@ -91,7 +91,7 @@ object SCompiler {
         il.append(new IAND())
 
       // expr or expr
-      case ASTAnd(left, right) =>
+      case ASTOr(left, right) =>
         il.append(compileExpr(left, env))
         il.append(compileExpr(right, env))
         // branch: (l, r) -> [01]

@@ -8,6 +8,7 @@ import scala.io.Source
 
 object Margn {
   val extension = ".mg"
+
   def main(args: Array[String]) = {
     optParser.parse(args, OptConfig()) match {
       case Some(opt_config) =>
