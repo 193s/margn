@@ -24,14 +24,18 @@ class Env(val cg: ConstantPoolGen) {
 
 
 object SCompiler {
+  private type IL = InstructionList
   /** compile source code into class file */
   def compile(classFile: String, code: String): Unit = compile(classFile, Parser(code))
 
   private def compileError(msg: String = "") = throw new CompileError(msg)
   private def typeError   (msg: String = "") = throw new TypeError(msg)
+
+  private val CONST_TRUE  = new ICONST(1)
+  private val CONST_FALSE = new ICONST(0)
   /** compile expressions */
-  def compileExpr(ast: ASTExpr, env: Env): InstructionList = {
-    val il = new InstructionList()
+  def compileExpr(ast: ASTExpr, env: Env): IL = {
+    val il = new IL()
     ast match {
       // int
       case ASTInteger(value) =>
@@ -61,52 +65,87 @@ object SCompiler {
 
       // expr + expr
       case ASTPlus(left, right) =>
-        il.append(compileExpr(left, env))
-        il.append(compileExpr(right, env))
-        il.append(new IADD())
+        (left._type_, right._type_) match {
+          case (DInt, DInt) =>
+            il.append(compileExpr(left, env))
+            il.append(compileExpr(right, env))
+            il.append(new IADD())
+
+          // TODO
+          // case (DString, DInt) =>
+
+          case any => typeError(s"<int> + <int> : $any")
+        }
 
       // expr - expr
       case ASTMinus(left, right) =>
-        il.append(compileExpr(left, env))
-        il.append(compileExpr(right, env))
-        il.append(new ISUB())
+        (left._type_, right._type_) match {
+          case (DInt, DInt) =>
+            il.append(compileExpr(left, env))
+            il.append(compileExpr(right, env))
+            il.append(new ISUB())
+
+          case any => typeError(s"<int> - <int> : $any")
+        }
 
       // expr * expr
       case ASTMultiply(left, right) =>
-        il.append(compileExpr(left, env))
-        il.append(compileExpr(right, env))
-        il.append(new IMUL())
+        (left._type_, right._type_) match {
+          case (DInt, DInt) =>
+            il.append(compileExpr(left, env))
+            il.append(compileExpr(right, env))
+            il.append(new IMUL())
+
+          case any => typeError(s"<int> * <int> : $any")
+        }
 
       // expr / expr
       case ASTDivide(left, right) =>
-        il.append(compileExpr(left, env))
-        il.append(compileExpr(right, env))
-        il.append(new IDIV())
+        (left._type_, right._type_) match {
+          case (DInt, DInt) =>
+            il.append(compileExpr(left, env))
+            il.append(compileExpr(right, env))
+            il.append(new IDIV())
+
+          case any => typeError(s"<int> / <int> : $any")
+        }
 
       // expr and expr
       case ASTAnd(left, right) =>
-        il.append(compileExpr(left, env))
-        il.append(compileExpr(right, env))
-        // branch: (l, r) -> [01]
-        il.append(new IAND())
+        (left._type_, right._type_) match {
+          case (DBool, DBool) =>
+            il.append(compileExpr(left, env))
+            il.append(compileExpr(right, env))
+            il.append(new IAND())
+
+          case any => typeError(s"<bool> and <bool> : $any")
+        }
 
       // expr or expr
       case ASTOr(left, right) =>
-        il.append(compileExpr(left, env))
-        il.append(compileExpr(right, env))
-        // branch: (l, r) -> [01]
-        il.append(new IOR())
+        (left._type_, right._type_) match {
+          case (DBool, DBool) =>
+            il.append(compileExpr(left, env))
+            il.append(compileExpr(right, env))
+            il.append(new IOR())
+
+          case any => typeError(s"<bool> or <bool> : $any")
+        }
 
       // expr == expr
       case AST_EQ(left, right) =>
-        il.append(compileExpr(left, env))
-        il.append(compileExpr(right, env))
-        // branch: (l, r) -> [01]
-        il.append(branchIns(
-          new IF_ICMPEQ(null),
-          new InstructionList(new ICONST(0)),
-          new InstructionList(new ICONST(1))
-        ))
+        (left._type_, right._type_) match {
+          case (DInt, DInt) =>
+            il.append(compileExpr(left, env))
+            il.append(compileExpr(right, env))
+            il.append(branchIns(
+              new IF_ICMPEQ(null),
+              new IL(CONST_FALSE),
+              new IL(CONST_TRUE)
+            ))
+
+          case any => typeError(s"<int> == <int> : $any")
+        }
 
       // expr != expr
       case AST_NE(left, right) =>
@@ -115,8 +154,8 @@ object SCompiler {
         // branch: (l, r) -> [01]
         il.append(branchIns(
           new IF_ICMPNE(null),
-          new InstructionList(new ICONST(0)),
-          new InstructionList(new ICONST(1))
+          new IL(CONST_FALSE),
+          new IL(CONST_TRUE)
         ))
 
       // expr >= expr
@@ -126,8 +165,8 @@ object SCompiler {
         // branch: (l, r) -> [01]
         il.append(branchIns(
           new IF_ICMPGE(null),
-          new InstructionList(new ICONST(0)),
-          new InstructionList(new ICONST(1))
+          new IL(CONST_FALSE),
+          new IL(CONST_TRUE)
         ))
 
       // expr > expr
@@ -137,8 +176,8 @@ object SCompiler {
         // branch: (l, r) -> [01]
         il.append(branchIns(
           new IF_ICMPGT(null),
-          new InstructionList(new ICONST(0)),
-          new InstructionList(new ICONST(1))
+          new IL(CONST_FALSE),
+          new IL(CONST_TRUE)
         ))
 
       // expr <= expr
@@ -148,8 +187,8 @@ object SCompiler {
         // branch: (l, r) -> [01]
         il.append(branchIns(
           new IF_ICMPLE(null),
-          new InstructionList(new ICONST(0)),
-          new InstructionList(new ICONST(1))
+          new IL(CONST_FALSE),
+          new IL(CONST_TRUE)
         ))
 
       // expr < expr
@@ -159,8 +198,8 @@ object SCompiler {
         // branch: (l, r) -> [01]
         il.append(branchIns(
           new IF_ICMPLT(null),
-          new InstructionList(new ICONST(0)),
-          new InstructionList(new ICONST(1))
+          new IL(CONST_FALSE),
+          new IL(CONST_TRUE)
         ))
 
       case e => throw new CompileError(s"[FATAL ERROR] Unexpected syntax tree (expr): $e")
@@ -169,8 +208,8 @@ object SCompiler {
   }
 
   /** branch instruction: if-then style */
-  private def branchIns(branch_ins: IfInstruction, then: InstructionList) = {
-    val il = new InstructionList()
+  private def branchIns(branch_ins: IfInstruction, then: IL): IL = {
+    val il = new IL()
     // branch
     val target = il.append(branch_ins)
     // then
@@ -182,8 +221,8 @@ object SCompiler {
   }
 
   /** branch instruction: if-then-else style */
-  private def branchIns(branch_ins: IfInstruction, then: InstructionList, els: InstructionList) = {
-    val il = new InstructionList()
+  private def branchIns(branch_ins: IfInstruction, then: IL, els: IL): IL = {
+    val il = new IL()
     // branch
     val target = il.append(branch_ins)
     // then
@@ -199,8 +238,8 @@ object SCompiler {
   }
 
   /** compile statements */
-  def compileStatement(ast: ASTStatement, env: Env): InstructionList = {
-    val il = new InstructionList()
+  def compileStatement(ast: ASTStatement, env: Env): IL = {
+    val il = new IL()
     ast match {
       case ASTBlock(children) =>
         // compile and append all statements
@@ -234,7 +273,7 @@ object SCompiler {
         il.append(branchIns(
           new IFNE(null),
           {
-            val l = new InstructionList()
+            val l = new IL()
             l.append(new NEW(assert_err))
             l.append(new DUP())
             l.append(new LDC(env.cg.addString("assertion failed")))
@@ -273,8 +312,8 @@ object SCompiler {
   }
 
   /** compile programs */
-  def compileProgram(ast: ASTProgram, env: Env): InstructionList = {
-    val il = new InstructionList()
+  def compileProgram(ast: ASTProgram, env: Env): IL = {
+    val il = new IL()
     for (s: ASTStatement <- ast.children) {
       il.append(compileStatement(s, env))
     }
@@ -288,7 +327,7 @@ object SCompiler {
     val env = new Env(cg)
 
     // generate instruction list
-    val il = new InstructionList()
+    val il = new IL()
     il.append(compileProgram(program, env))
     // return (void)
     il.append(InstructionConstants.RETURN)
