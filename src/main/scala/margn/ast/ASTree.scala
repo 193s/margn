@@ -29,6 +29,8 @@ abstract class ASTCompare(left: ASTExpr, right: ASTExpr) extends ASTBiOperator(D
 case class ASTAnd(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
 case class ASTOr (left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
 
+case class ASTXor(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
+
 case class AST_EQ(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
 case class AST_NE(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
 case class AST_GE(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)

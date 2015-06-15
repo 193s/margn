@@ -132,6 +132,17 @@ object SCompiler {
           case any => typeError(s"<bool> or <bool> : $any")
         }
 
+      // expr or expr
+      case ASTXor(left, right) =>
+        (left._type_, right._type_) match {
+          case (DInt, DInt) =>
+            il.append(compileExpr(left, env))
+            il.append(compileExpr(right, env))
+            il.append(new IXOR())
+
+          case any => typeError(s"<int> ^ <int> : $any")
+        }
+
       // expr == expr
       case AST_EQ(left, right) =>
         (left._type_, right._type_) match {

@@ -30,7 +30,7 @@ object Parser extends JavaTokenParsers {
   def print:  Stat = "print"  ~> expr ^^ { ASTPrint }
   def assert: Stat = "assert" ~> expr ^^ { ASTAssert }
   def let:    Stat = "let" ~> ident ~ "=" ~ expr ^^ {
-    case left ~ _ ~ expr => ASTLet(left, expr)
+    case id ~ _ ~ expr => ASTLet(id, expr)
   }
   def if_ :   Stat = "if" ~> expr ~ ":" ~ stat ~ ( split ~> "else" ~> ":" ~> stat ).? ^^ {
     case astCond ~ _ ~ astThen ~ opt =>
@@ -63,7 +63,8 @@ object Parser extends JavaTokenParsers {
   private val ops: Map[Int, Map[String, (ASTExpr, ASTExpr) => ASTOperator]] = Map (
     0 -> Map (
       "and" -> ASTAnd,
-      "or"  -> ASTOr
+      "or"  -> ASTOr,
+      "^"   -> ASTXor
     ),
     1 -> Map (
       "==" -> AST_EQ,
