@@ -121,6 +121,7 @@ op    ::= "+" | "-" | "==" | ...
 | Precedence | Op            | Description                 |
 |:-----------|:--------------|-----------------------------|
 | 0          | and or        | logical and/or              |
+| 0          | ^             | xor                         |
 | 1          | == !=         | compare                     |
 |            | > >= < <=     |                             |
 | 2          | + -           | addition and subtraction    |
