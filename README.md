@@ -109,7 +109,7 @@ expr ::= expr op expr
 #### Operators
 ##### Unary Operators
 ```ebnf
-unary_op ::=  "-" expr
+unary_op ::=  ("-"|"+"|"~"|"!") expr
 ```
 
 ##### Binary Operators

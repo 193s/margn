@@ -46,7 +46,12 @@ object Parser extends JavaTokenParsers {
 
   def expr: Expr = e0
 
-  def unaryOp: Expr = "-" ~> simpleExpr ^^ { ASTIUnaryMinus }
+  def unaryOp: Expr = ("-"|"+"|"~"|"!") ~ simpleExpr ^^ {
+    case "-" ~ expr => ASTUnaryMinus(expr)
+    case "+" ~ expr => ASTUnaryPlus(expr)
+    case "~" ~ expr => ASTUnaryTilda(expr)
+    case "!" ~ expr => ASTUnaryExclamation(expr)
+  }
 
   def simpleExpr: Expr = (
     unaryOp

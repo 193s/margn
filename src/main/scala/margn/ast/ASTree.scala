@@ -39,7 +39,11 @@ case class AST_LE(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
 case class AST_LT(left: ASTExpr, right: ASTExpr) extends ASTCompare(left, right)
 
 abstract class ASTIOperator extends ASTOperator(DInt)
-case class ASTIUnaryMinus(expr: ASTExpr) extends ASTIOperator
+case class ASTUnaryPlus(expr: ASTExpr)        extends ASTIOperator
+case class ASTUnaryMinus(expr: ASTExpr)       extends ASTIOperator
+case class ASTUnaryTilda(expr: ASTExpr)       extends ASTIOperator
+case class ASTUnaryExclamation(expr: ASTExpr) extends ASTIOperator
+
 case class ASTPlus(left: ASTExpr, right: ASTExpr)     extends ASTIOperator
 case class ASTMinus(left: ASTExpr, right: ASTExpr)    extends ASTIOperator
 case class ASTMultiply(left: ASTExpr, right: ASTExpr) extends ASTIOperator

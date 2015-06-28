@@ -53,14 +53,45 @@ object SCompiler {
       case ASTVariableReference(id) =>
         il.append(new ILOAD(env.getIndex(id)))
 
+      // + expr
+      case ASTUnaryPlus(expr) =>
+        expr._type_ match {
+          case DInt =>
+            il.append(compileExpr(expr, env))
+
+          case any => typeError(s"+ <int> : $any")
+        }
+
       // - expr
-      case ASTIUnaryMinus(expr) =>
+      case ASTUnaryMinus(expr) =>
         expr._type_ match {
           case DInt =>
             il.append(compileExpr(expr, env))
             il.append(new INEG())
 
           case any => typeError(s"- <int> : $any")
+        }
+
+      // ~ expr
+      case ASTUnaryTilda(expr) =>
+        expr._type_ match {
+          case DInt => compileError("unimplemented: ~ <int>")
+
+          case any => typeError(s"~ <int> : $any")
+        }
+
+      // ! expr
+      case ASTUnaryExclamation(expr) =>
+        expr._type_ match {
+          case DBool =>
+            il.append(compileExpr(expr, env))
+            il.append(branchIns(
+              new IFNE(null),
+              new IL(CONST_TRUE),
+              new IL(CONST_FALSE)
+            ))
+
+          case any => typeError(s"- <bool> : $any")
         }
 
       // expr + expr
