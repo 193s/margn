@@ -7,6 +7,7 @@ case class ASTProgram(children: Seq[ASTStatement]) extends ASTree
 
 abstract class ASTStatement extends ASTree
 
-abstract class ASTExpr(val _type_ : DType) extends ASTree
-
+abstract class ASTExpr extends ASTree {
+  var _type_ : DType = null
+}
 

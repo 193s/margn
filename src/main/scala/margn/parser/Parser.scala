@@ -95,7 +95,9 @@ object Parser extends JavaTokenParsers {
     7 -> Map(),
     8 -> Map(),
     9 -> Map(),
-    10 -> Map()
+    10 -> Map(
+      "."  -> ASTRefOp
+    )
   )
 
   private def biOp(priority: Int)(op: String)(left: ASTExpr, right: ASTExpr): ASTOperator = ops(priority)(op)(left, right)
@@ -135,7 +137,10 @@ object Parser extends JavaTokenParsers {
 
 
   /* literals */
-  def literal: Expr = integerLiteral | stringLit | booleanLiteral
+  def literal: Expr = integerLiteral | stringLit | booleanLiteral | failure("<literal>")
+  // def literal: Expr = integerLiteral | stringLit | booleanLiteral | refLiteral | failure("<literal>")
+
+  // def refLiteral: Expr = ident ^^ { ASTRef }
 
   def integerLiteral: Expr = (
     binaryNumeral

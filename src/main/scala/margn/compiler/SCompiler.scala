@@ -1,6 +1,7 @@
 package margn.compiler
 
 import margn.ast._
+import margn.semantic.SemanticAnalyzer
 import margn.parser.Parser
 import margn.types.DType.{DBool, DInt, DString}
 import org.apache.bcel.Constants._
@@ -19,17 +20,23 @@ class Env(val cg: ConstantPoolGen) {
     maxIndex += 1
     index
   }
-  def getIndex(name: String) = namespace(name)
+  def getIndex(name: String) = {
+    if (namespace.contains(name)) namespace(name)
+    else throw new CompileError("couldn't resolve name: " + name)
+  }
 }
 
 
 object SCompiler {
   private type IL = InstructionList
   /** compile source code into class file */
-  def compile(classFile: String, code: String): Unit = compile(classFile, Parser(code))
+  def compile(classFile: String, code: String): Unit = {
+    val ast = Parser(code)
+    SemanticAnalyzer(ast)
+    compile(classFile, ast)
+  }
 
   private def compileError(msg: String = "") = throw new CompileError(msg)
-  private def typeError   (msg: String = "") = throw new TypeError(msg)
 
   private val CONST_TRUE  = new ICONST(1)
   private val CONST_FALSE = new ICONST(0)
@@ -55,44 +62,25 @@ object SCompiler {
 
       // + expr
       case ASTUnaryPlus(expr) =>
-        expr._type_ match {
-          case DInt =>
-            il.append(compileExpr(expr, env))
-
-          case any => typeError(s"+ <int> : $any")
-        }
+        il.append(compileExpr(expr, env))
 
       // - expr
       case ASTUnaryMinus(expr) =>
-        expr._type_ match {
-          case DInt =>
-            il.append(compileExpr(expr, env))
-            il.append(new INEG())
-
-          case any => typeError(s"- <int> : $any")
-        }
+        il.append(compileExpr(expr, env))
+        il.append(new INEG())
 
       // ~ expr
       case ASTUnaryTilda(expr) =>
-        expr._type_ match {
-          case DInt => compileError("unimplemented: ~ <int>")
-
-          case any => typeError(s"~ <int> : $any")
-        }
+        compileError("unimplemented: ~ <int>")
 
       // ! expr
       case ASTUnaryExclamation(expr) =>
-        expr._type_ match {
-          case DBool =>
-            il.append(compileExpr(expr, env))
-            il.append(branchIns(
-              new IFNE(null),
-              new IL(CONST_TRUE),
-              new IL(CONST_FALSE)
-            ))
-
-          case any => typeError(s"- <bool> : $any")
-        }
+        il.append(compileExpr(expr, env))
+        il.append(branchIns(
+          new IFNE(null),
+          new IL(CONST_TRUE),
+          new IL(CONST_FALSE)
+        ))
 
       // expr + expr
       case ASTPlus(left, right) =>
@@ -104,8 +92,7 @@ object SCompiler {
 
           // TODO
           // case (DString, DInt) =>
-
-          case any => typeError(s"<int> + <int> : $any")
+          case any =>
         }
 
       // expr - expr
@@ -115,8 +102,7 @@ object SCompiler {
             il.append(compileExpr(left, env))
             il.append(compileExpr(right, env))
             il.append(new ISUB())
-
-          case any => typeError(s"<int> - <int> : $any")
+          case any =>
         }
 
       // expr * expr
@@ -126,8 +112,7 @@ object SCompiler {
             il.append(compileExpr(left, env))
             il.append(compileExpr(right, env))
             il.append(new IMUL())
-
-          case any => typeError(s"<int> * <int> : $any")
+          case any =>
         }
 
       // expr / expr
@@ -137,8 +122,7 @@ object SCompiler {
             il.append(compileExpr(left, env))
             il.append(compileExpr(right, env))
             il.append(new IDIV())
-
-          case any => typeError(s"<int> / <int> : $any")
+          case any =>
         }
 
       // expr and expr
@@ -148,8 +132,7 @@ object SCompiler {
             il.append(compileExpr(left, env))
             il.append(compileExpr(right, env))
             il.append(new IAND())
-
-          case any => typeError(s"<bool> and <bool> : $any")
+          case any =>
         }
 
       // expr or expr
@@ -159,8 +142,7 @@ object SCompiler {
             il.append(compileExpr(left, env))
             il.append(compileExpr(right, env))
             il.append(new IOR())
-
-          case any => typeError(s"<bool> or <bool> : $any")
+          case any =>
         }
 
       // expr or expr
@@ -170,8 +152,7 @@ object SCompiler {
             il.append(compileExpr(left, env))
             il.append(compileExpr(right, env))
             il.append(new IXOR())
-
-          case any => typeError(s"<int> ^ <int> : $any")
+          case any =>
         }
 
       // expr == expr
@@ -185,8 +166,7 @@ object SCompiler {
               new IL(CONST_FALSE),
               new IL(CONST_TRUE)
             ))
-
-          case any => typeError(s"<int> == <int> : $any")
+          case any =>
         }
 
       // expr != expr
@@ -294,12 +274,13 @@ object SCompiler {
       // print
       case ASTPrint(expr) =>
         val out = env.cg.addFieldref("java.lang.System", "out", "Ljava/io/PrintStream;")
-        val sig = expr._type_ match {
-          case DInt => "(I)V"
-          case DString  => "(Ljava/lang/String;)V"
-          case DBool => "(Z)V"
-          case any      => "(Ljava/lang/Object;)V"
+        val t = expr._type_ match {
+          case DInt     => Type.INT
+          case DString  => Type.STRING
+          case DBool    => Type.BOOLEAN
+          case any      => Type.OBJECT
         }
+        val sig = "(" + t.getSignature + ")V"
         val sys_println = env.cg.addMethodref("java.io.PrintStream", "println", sig)
         il.append(new GETSTATIC(out))
         il.append(compileExpr(expr, env))
