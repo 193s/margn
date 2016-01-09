@@ -11,18 +11,20 @@ object SemanticAnalyzer {
 
   class Env() {
     private var maxIndex = 0
-    private val namespace = mutable.Map[String, Int]()
+    private val namespace = mutable.Map[String, (Int, DType)]()
 
-    def createIndex(name: String): Int = {
+    def createIndex(name: String, _type: DType): Int = {
       val index = maxIndex
-      namespace += name -> index
+      namespace += name -> (index, _type)
       maxIndex += 1
       index
     }
-    def getIndex(name: String) = {
+    def resolve(name: String) =
       if (namespace.contains(name)) namespace(name)
       else throw new NameError("couldn't resolve name: " + name)
-    }
+
+    def getIndex(name: String) = resolve(name)._1
+    def getType (name: String) = resolve(name)._2
   }
 
 
@@ -35,7 +37,7 @@ object SemanticAnalyzer {
       }
     }
 
-    private def typeError   (msg: String = "") = throw new TypeError(msg)
+    private def typeError(msg: String = "") = throw new TypeError(msg)
 
     /** compile expressions */
     def checkExpr(ast: ASTExpr, env: Env): DType = {
@@ -47,9 +49,7 @@ object SemanticAnalyzer {
         // string
         case ASTString(string) => DString
         // variable
-        case ASTVariableReference(id) =>
-          env.getIndex(id)
-          DInt // FIXME
+        case ASTVariableReference(id) => env.getType(id)
 
         // + expr
         case ASTUnaryPlus(expr) =>
@@ -195,8 +195,7 @@ object SemanticAnalyzer {
 
         // let
         case ASTLet(id, expr) =>
-          env.createIndex(id) //
-          checkExpr(expr, env)
+          env.createIndex(id, checkExpr(expr, env))
 
         // if
         case ASTIf(cond, then) =>
