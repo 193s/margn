@@ -30,7 +30,7 @@ To execute a compiled class file, type:
 $ java script
 ```
 
-Type `margn --help` for more detailed information.
+Try `margn --help` for more detailed information.
 
 ## Installation
 1. `$ git clone https://github.com/193s/margn.git && cd margn`
@@ -47,6 +47,7 @@ Type `margn --help` for more detailed information.
 See Issues: https://github.com/193s/margn/issues
 
 ## Language Reference
+The syntax of Margn is defined by EBNF.
 
 ### Program
 ```ebnf
@@ -81,7 +82,7 @@ evaluates \<expr\> and throws an `AssertionError` if it is `False`.
 ```ebnf
 let    ::= "let" id "=" expr
 ```
-creates a readonly variable called `id`.
+creates a read-only variable named `id`.
 
 #### block
 ```ebnf
