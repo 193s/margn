@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/193s/margn.svg)](https://travis-ci.org/193s/margn)
 
 
-margn is a JVM-based scripting language that compiles into Java class file.  
+margn is a JVM-based scripting language that compiles your source code into a Java class file.  
 
 ```c
 let a = 100;
@@ -21,22 +21,22 @@ else        : print "no";
 
 
 ## Usage
-compile a script:
+To compile a script, type:
 ```sh
 $ margn script.mg
 ```
-execute a compiled class file:
+To execute a compiled class file, type:
 ```sh
 $ java script
 ```
 
-`margn --help` for more information.
+Type `margn --help` for more detailed information.
 
 ## Installation
 1. `$ git clone https://github.com/193s/margn.git && cd margn`
 2. `$ sbt assembly`  
-> An executable sh file `./margn` (contains jar) will be generated
-3. (Optional) add the current directory to the PATH, or simply copy it to `/usr/local/bin`.
+> An executable shell file `./margn` (contains jar) will be generated
+3. (Optional) add your current directory to the PATH, or simply move the file to `/usr/local/bin`.
 
 #### Requirements
 - Scala
